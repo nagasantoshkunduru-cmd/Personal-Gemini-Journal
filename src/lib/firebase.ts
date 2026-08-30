@@ -25,17 +25,48 @@ import type { JournalEntry, UserAuthProfile } from '../types';
 import { SAMPLE_INITIAL_ENTRIES } from './sampleData';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Initialize Firebase App singleton
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Build effective Firebase config with fallback to environment variables
+const rawConfig = (firebaseConfig as any) || {};
+const metaEnv = ((import.meta as any)?.env) || {};
+const effectiveFirebaseConfig = {
+  apiKey: metaEnv.VITE_FIREBASE_API_KEY || rawConfig.apiKey || '',
+  authDomain: metaEnv.VITE_FIREBASE_AUTH_DOMAIN || rawConfig.authDomain || '',
+  projectId: metaEnv.VITE_FIREBASE_PROJECT_ID || rawConfig.projectId || '',
+  storageBucket: metaEnv.VITE_FIREBASE_STORAGE_BUCKET || rawConfig.storageBucket || '',
+  messagingSenderId: metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || rawConfig.messagingSenderId || '',
+  appId: metaEnv.VITE_FIREBASE_APP_ID || rawConfig.appId || '',
+  firestoreDatabaseId: metaEnv.VITE_FIRESTORE_DATABASE_ID || rawConfig.firestoreDatabaseId || '(default)',
+};
 
-// Initialize Auth
+// Initialize Firebase App singleton safely
+let app: any;
+try {
+  app = getApps().length === 0 ? initializeApp(effectiveFirebaseConfig) : getApp();
+} catch (e) {
+  console.warn('[Firebase] Initializing default fallback app:', e);
+  app = getApps().length === 0 ? initializeApp({ projectId: 'demo-personal-journal' }) : getApp();
+}
+
+// Initialize Auth safely
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Initialize Firestore with the dedicated database ID if configured
-export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Firestore safely with fallback
+function initFirestore() {
+  try {
+    if (
+      effectiveFirebaseConfig.firestoreDatabaseId &&
+      effectiveFirebaseConfig.firestoreDatabaseId !== '(default)'
+    ) {
+      return getFirestore(app, effectiveFirebaseConfig.firestoreDatabaseId);
+    }
+  } catch (e) {
+    console.warn('[Firestore] Named database initialization failed, falling back to default:', e);
+  }
+  return getFirestore(app);
+}
+
+export const db = initFirestore();
 
 /**
  * Format Firebase User into app profile format
