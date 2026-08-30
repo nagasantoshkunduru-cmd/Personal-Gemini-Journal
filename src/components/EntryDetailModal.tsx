@@ -16,25 +16,30 @@ import {
   FileText,
   CheckCircle,
   Copy,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
-import type { JournalEntry } from '../types';
+import type { JournalEntry, UserAuthProfile } from '../types';
 import { formatDate, formatTime, getSentimentColor } from '../lib/sanitize';
 
 interface EntryDetailModalProps {
   entry: JournalEntry | null;
   isOpen: boolean;
+  currentUser?: UserAuthProfile | null;
   onClose: () => void;
   onDelete: (entryId: string) => Promise<void>;
   onTagClick?: (tag: string) => void;
+  onRequireAuth?: () => void;
 }
 
 export function EntryDetailModal({
   entry,
   isOpen,
+  currentUser,
   onClose,
   onDelete,
   onTagClick,
+  onRequireAuth,
 }: EntryDetailModalProps) {
   const [showRawChat, setShowRawChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -91,14 +96,23 @@ ${entry.rawTranscript}
   };
 
   const handleDeleteEntry = async () => {
+    if (!currentUser) {
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        alert('Please sign in to delete or make changes to journal entries.');
+      }
+      return;
+    }
+
     if (confirm('Are you sure you want to permanently delete this journal entry? This cannot be undone.')) {
       setIsDeleting(true);
       try {
         await onDelete(entry.id);
         onClose();
-      } catch (err) {
+      } catch (err: any) {
         console.error('Delete error:', err);
-        alert('Failed to delete entry.');
+        alert('Failed to delete entry: ' + (err.message || 'Check your permissions.'));
       } finally {
         setIsDeleting(false);
       }

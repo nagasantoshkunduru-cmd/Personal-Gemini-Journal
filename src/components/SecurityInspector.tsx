@@ -154,9 +154,13 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
                 ) : (
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between py-1 border-b border-[#225030]">
+                      <span className="text-[#A0A0A0]">Access Model:</span>
+                      <span className="font-bold text-[#4ADE80]">Public Read • Authenticated Write</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-[#225030]">
                       <span className="text-[#A0A0A0]">Active User Scope:</span>
                       <span className="font-mono text-white">
-                        {currentUser ? `users/${currentUser.uid}` : 'Anonymous / Unauthenticated'}
+                        {currentUser ? `Authenticated (UID: ${currentUser.uid.slice(0, 10)}...)` : 'Visitor / Public Read-Only'}
                       </span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#225030]">
@@ -165,7 +169,7 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#225030]">
                       <span className="text-[#A0A0A0]">Firestore Access Rule Model:</span>
-                      <span className="font-bold text-[#4ADE80]">Owner-Only (request.auth.uid == userId)</span>
+                      <span className="font-bold text-[#4ADE80]">Public Read, request.auth != null for Write</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-[#A0A0A0]">AI Schema Enforcement:</span>
@@ -180,34 +184,34 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
           {activeTab === 'rules' && (
             <div className="space-y-3">
               <p className="text-xs text-[#808080]">
-                Firestore Security Rules deployed via Firebase Engine. Denies all cross-user queries, IDOR injections, and public reads.
+                Firestore Security Rules deployed via Firebase Engine: Public read access for browsing, strict <code className="text-[#4285F4]">request.auth != null</code> constraint for writes and modifications.
               </p>
               <div className="bg-[#0A0A0B] text-[#C0C0C0] p-4 rounded-xl font-mono text-xs overflow-x-auto border border-[#1E1E20]">
                 <pre>{`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // Public journal entries: anyone can read, must be authenticated to write
+    match /entries/{entryId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Isolated user scope: /users/{userId}
+    // User-scoped collections
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Isolated journal entries: /users/{userId}/entries/{entryId}
-      match /entries/{entryId} {
-        allow read, write: if isOwner(userId);
+      match /{allSubcollections=**} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // Catch-all: Deny all other collections
+    // Fallback rule
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }`}</pre>

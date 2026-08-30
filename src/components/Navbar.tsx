@@ -107,7 +107,7 @@ export function Navbar({
               <span className="sm:hidden">New</span>
             </button>
 
-            {/* User Auth Profile State */}
+            {/* User Profile or Public Access Status */}
             {user ? (
               <div className="relative">
                 <button
@@ -116,7 +116,7 @@ export function Navbar({
                   className="flex items-center gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition"
                 >
                   <span className="text-xs font-medium text-[#C0C0C0] max-w-[100px] truncate hidden sm:inline">
-                    {user.displayName || (user.isAnonymous ? 'Guest User' : 'User')}
+                    {user.displayName || (user.isAnonymous ? 'Public User' : 'User')}
                   </span>
                   <div className="w-7 h-7 rounded-full bg-[#2A2A2D] text-[#4285F4] flex items-center justify-center text-xs font-bold">
                     {user.photoURL ? (
@@ -141,11 +141,11 @@ export function Navbar({
                         {user.displayName || 'Reflective Journaler'}
                       </p>
                       <p className="text-[11px] text-[#808080] truncate">
-                        {user.email || 'Anonymous Guest Session'}
+                        {user.email || 'Public Session'}
                       </p>
                       <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-0.5 rounded-md w-fit font-mono">
                         <Lock className="w-3 h-3" />
-                        <span>users/{user.uid.slice(0, 8)}...</span>
+                        <span>Authenticated • Write Access</span>
                       </div>
                     </div>
 
@@ -157,7 +157,7 @@ export function Navbar({
                       className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center gap-2"
                     >
                       <ShieldCheck className="w-4 h-4 text-[#4ADE80]" />
-                      View Security Blueprint
+                      View Security Rules
                     </button>
 
                     <button
@@ -175,14 +175,17 @@ export function Navbar({
                 )}
               </div>
             ) : (
-              <button
-                id="nav-sign-in-btn"
-                onClick={onOpenAuth}
-                className="py-2 px-3.5 bg-[#161618] text-[#E0E0E0] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] rounded-xl text-xs font-semibold shadow-xs transition flex items-center gap-1.5"
-              >
-                <User className="w-3.5 h-3.5 text-[#4285F4]" />
-                Sign In
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  id="nav-sign-in-btn"
+                  onClick={onOpenAuth}
+                  className="py-2 px-3.5 bg-[#1A2536] text-[#60A5FA] border border-[#254060] hover:bg-[#203248] hover:border-[#386090] rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                  title="Sign in to write and save changes"
+                >
+                  <User className="w-3.5 h-3.5 text-[#4285F4]" />
+                  <span>Sign In to Write</span>
+                </button>
+              </div>
             )}
           </div>
         </div>

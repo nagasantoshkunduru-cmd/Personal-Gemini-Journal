@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { JournalEntry, UserAuthProfile } from './types';
-import { onAuthUserChanged, subscribeUserEntries, deleteJournalEntry } from './lib/firebase';
+import { onAuthUserChanged, subscribePublicEntries, deleteJournalEntry } from './lib/firebase';
 import { Navbar } from './components/Navbar';
 import { JournalList } from './components/JournalList';
 import { JournalChat } from './components/JournalChat';
@@ -8,7 +8,7 @@ import { EntryDetailModal } from './components/EntryDetailModal';
 import { SentimentAnalytics } from './components/SentimentAnalytics';
 import { SecurityInspector } from './components/SecurityInspector';
 import { AuthModal } from './components/AuthModal';
-import { ShieldCheck, Sparkles, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAuthProfile | null>(null);
@@ -18,27 +18,20 @@ export default function App() {
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Listen to Firebase Auth state changes
+  // 1. Listen to Firebase Auth state changes (optional profile)
   useEffect(() => {
     const unsubscribeAuth = onAuthUserChanged((profile) => {
       setCurrentUser(profile);
-      setIsLoading(false);
     });
 
     return () => unsubscribeAuth();
   }, []);
 
-  // 2. Real-time Firestore entries subscription strictly scoped to currentUser.uid
+  // 2. Real-time Public Firestore entries subscription (accessible immediately to all visitors)
   useEffect(() => {
-    if (!currentUser?.uid) {
-      setEntries([]);
-      return;
-    }
-
-    const unsubscribeFirestore = subscribeUserEntries(
-      currentUser.uid,
+    const unsubscribeFirestore = subscribePublicEntries(
       (data) => {
         setEntries(data);
       },
@@ -48,7 +41,15 @@ export default function App() {
     );
 
     return () => unsubscribeFirestore();
-  }, [currentUser?.uid]);
+  }, []);
+
+  const handleStartNewSession = () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+    } else {
+      setIsChatting(true);
+    }
+  };
 
   const handleSessionSaved = (newEntryId: string) => {
     setIsChatting(false);
@@ -60,11 +61,14 @@ export default function App() {
   };
 
   const handleDeleteEntry = async (entryId: string) => {
-    if (!currentUser?.uid) return;
-    await deleteJournalEntry(currentUser.uid, entryId);
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    await deleteJournalEntry(entryId, currentUser.uid);
   };
 
-  const handleSelectTagFromAnalytics = (tag: string) => {
+  const handleSelectTagFromAnalytics = (_tag: string) => {
     setActiveView('journal');
   };
 
@@ -75,13 +79,7 @@ export default function App() {
         user={currentUser}
         activeView={activeView}
         setActiveView={setActiveView}
-        onOpenNewSession={() => {
-          if (!currentUser) {
-            setIsAuthModalOpen(true);
-          } else {
-            setIsChatting(true);
-          }
-        }}
+        onOpenNewSession={handleStartNewSession}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenSecurityInspector={() => setIsSecurityModalOpen(true)}
       />
@@ -103,25 +101,13 @@ export default function App() {
               <JournalList
                 entries={entries}
                 onSelectEntry={(entry) => setSelectedEntry(entry)}
-                onNewSession={() => {
-                  if (!currentUser) {
-                    setIsAuthModalOpen(true);
-                  } else {
-                    setIsChatting(true);
-                  }
-                }}
+                onNewSession={handleStartNewSession}
               />
             ) : (
               <SentimentAnalytics
                 entries={entries}
                 onSelectTag={handleSelectTagFromAnalytics}
-                onNewSession={() => {
-                  if (!currentUser) {
-                    setIsAuthModalOpen(true);
-                  } else {
-                    setIsChatting(true);
-                  }
-                }}
+                onNewSession={handleStartNewSession}
               />
             )}
           </>
@@ -133,14 +119,8 @@ export default function App() {
         <div className="fixed bottom-6 right-6 z-30 sm:hidden">
           <button
             id="mobile-fab-new-session"
-            onClick={() => {
-              if (!currentUser) {
-                setIsAuthModalOpen(true);
-              } else {
-                setIsChatting(true);
-              }
-            }}
-            className="p-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-full shadow-xl transition flex items-center justify-center"
+            onClick={handleStartNewSession}
+            className="p-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-full shadow-xl transition flex items-center justify-center cursor-pointer"
           >
             <PlusCircle className="w-6 h-6" />
           </button>
@@ -151,8 +131,10 @@ export default function App() {
       <EntryDetailModal
         entry={selectedEntry}
         isOpen={Boolean(selectedEntry)}
+        currentUser={currentUser}
         onClose={() => setSelectedEntry(null)}
         onDelete={handleDeleteEntry}
+        onRequireAuth={() => setIsAuthModalOpen(true)}
       />
 
       <AuthModal
@@ -160,6 +142,7 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={(user) => {
           setCurrentUser(user);
+          setIsChatting(true);
         }}
       />
 

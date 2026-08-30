@@ -2,36 +2,29 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to verify user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to verify current user is the resource owner
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // Public journal entries: anyone can read, but must be logged in (authenticated) to create, update, or delete
+    match /entries/{entryId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Isolated user scope: /users/{userId}
+    // User-scoped entries and private collections: read is public or owner, write requires matching auth.uid
     match /users/{userId} {
-      // Users can only read and update their own root user record
-      allow read, write: if isOwner(userId);
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Isolated journal entries: /users/{userId}/entries/{entryId}
-      match /entries/{entryId} {
-        // Enforce strict owner-only access for create, read, update, delete, list
-        allow read, write: if isOwner(userId);
-      }
-
-      // Isolated active sessions / scratchpads
-      match /sessions/{sessionId} {
-        allow read, write: if isOwner(userId);
+      match /{allSubcollections=**} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // Catch-all: Deny any access to unspecified collections
+    // Fallback document rule
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
+
+

@@ -22,6 +22,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import type { JournalEntry, UserAuthProfile } from '../types';
+import { SAMPLE_INITIAL_ENTRIES } from './sampleData';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App singleton
@@ -44,7 +45,7 @@ export function formatUserProfile(user: User | null): UserAuthProfile | null {
   return {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName || (user.isAnonymous ? 'Guest Reflective User' : 'Journaler'),
+    displayName: user.displayName || (user.isAnonymous ? 'Public Contributor' : 'Journaler'),
     photoURL: user.photoURL,
     isAnonymous: user.isAnonymous,
   };
@@ -60,7 +61,7 @@ export function onAuthUserChanged(callback: (profile: UserAuthProfile | null) =>
 }
 
 /**
- * Google Sign-In
+ * Optional Google Sign-In
  */
 export async function signInWithGoogle(): Promise<UserAuthProfile> {
   const result = await signInWithPopup(auth, googleProvider);
@@ -70,7 +71,7 @@ export async function signInWithGoogle(): Promise<UserAuthProfile> {
 }
 
 /**
- * Email/Password Sign-In
+ * Optional Email/Password Sign-In
  */
 export async function signInWithEmail(email: string, pass: string): Promise<UserAuthProfile> {
   const result = await signInWithEmailAndPassword(auth, email, pass);
@@ -80,7 +81,7 @@ export async function signInWithEmail(email: string, pass: string): Promise<User
 }
 
 /**
- * Email/Password Sign-Up
+ * Optional Email/Password Sign-Up
  */
 export async function signUpWithEmail(email: string, pass: string): Promise<UserAuthProfile> {
   const result = await createUserWithEmailAndPassword(auth, email, pass);
@@ -90,7 +91,7 @@ export async function signUpWithEmail(email: string, pass: string): Promise<User
 }
 
 /**
- * Guest / Anonymous Sign-In (Zero friction, isolated securely under auth.uid)
+ * Guest / Anonymous Sign-In (Zero friction)
  */
 export async function signInAsGuest(): Promise<UserAuthProfile> {
   const result = await signInAnonymously(auth);
@@ -107,67 +108,98 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Security: Firestore collection reference strictly nested under authenticated user path:
- * /users/{userId}/entries
- */
-function getEntriesCollection(userId: string) {
-  if (!userId) throw new Error('Security Error: User ID is required for data isolation.');
-  return collection(db, 'users', userId, 'entries');
-}
-
-/**
- * Save / Update Journal Entry under users/{userId}/entries/{entryId}
+ * Save / Update Journal Entry to Cloud Firestore (Public Access)
  */
 export async function saveJournalEntry(
-  userId: string,
-  entry: Omit<JournalEntry, 'id' | 'userId'> & { id?: string }
+  userIdOrEntry: string | (Omit<JournalEntry, 'id'> & { id?: string }),
+  maybeEntry?: Omit<JournalEntry, 'id' | 'userId'> & { id?: string }
 ): Promise<string> {
-  if (!userId) throw new Error('Unauthorized: Missing User ID');
+  let userId = 'public';
+  let entryData: any;
 
-  const entriesRef = getEntriesCollection(userId);
-  const entryId = entry.id || `entry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const entryDoc = doc(entriesRef, entryId);
+  if (typeof userIdOrEntry === 'string') {
+    userId = userIdOrEntry || 'public';
+    entryData = maybeEntry || {};
+  } else {
+    entryData = userIdOrEntry;
+    userId = entryData.userId || 'public';
+  }
+
+  const entryId = entryData.id || `entry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   const fullEntry: JournalEntry = {
-    ...entry,
+    ...entryData,
     id: entryId,
-    userId,
+    userId: userId,
     updatedAt: Date.now(),
-    createdAt: entry.createdAt || Date.now(),
+    createdAt: entryData.createdAt || Date.now(),
   };
 
-  await setDoc(entryDoc, fullEntry, { merge: true });
+  // Write to public entries collection
+  const publicEntryDoc = doc(db, 'entries', entryId);
+  await setDoc(publicEntryDoc, fullEntry, { merge: true });
+
+  // If a specific userId exists, also mirror to user collection for compatibility
+  if (userId && userId !== 'public') {
+    try {
+      const userEntryDoc = doc(db, 'users', userId, 'entries', entryId);
+      await setDoc(userEntryDoc, fullEntry, { merge: true });
+    } catch (e) {
+      console.warn('Could not mirror to user collection:', e);
+    }
+  }
+
   return entryId;
 }
 
 /**
  * Delete Journal Entry
  */
-export async function deleteJournalEntry(userId: string, entryId: string): Promise<void> {
-  if (!userId || !entryId) throw new Error('Invalid arguments for deletion');
-  const entryDoc = doc(db, 'users', userId, 'entries', entryId);
-  await deleteDoc(entryDoc);
+export async function deleteJournalEntry(
+  param1: string,
+  param2?: string
+): Promise<void> {
+  const entryId = param2 ? param2 : param1;
+  const userId = param2 ? param1 : 'public';
+
+  // Delete from public entries
+  try {
+    const publicDocRef = doc(db, 'entries', entryId);
+    await deleteDoc(publicDocRef);
+  } catch (e) {
+    console.error('Error deleting from public entries:', e);
+  }
+
+  // Delete from user collection if userId provided
+  if (userId && userId !== 'public') {
+    try {
+      const userDocRef = doc(db, 'users', userId, 'entries', entryId);
+      await deleteDoc(userDocRef);
+    } catch (e) {
+      // ignore
+    }
+  }
 }
 
 /**
- * Real-time subscription to user's journal entries
+ * Real-time subscription to public journal entries (Accessible to anyone without login)
  */
-export function subscribeUserEntries(
-  userId: string,
+export function subscribePublicEntries(
   onData: (entries: JournalEntry[]) => void,
   onError?: (err: Error) => void
 ) {
-  if (!userId) {
-    onData([]);
-    return () => {};
-  }
-
-  const entriesRef = getEntriesCollection(userId);
+  const entriesRef = collection(db, 'entries');
   const q = query(entriesRef, orderBy('createdAt', 'desc'));
 
   return onSnapshot(
     q,
     (snapshot) => {
+      if (snapshot.empty) {
+        // Return default sample entries if Firestore collection is fresh
+        onData(SAMPLE_INITIAL_ENTRIES);
+        return;
+      }
+
       const items: JournalEntry[] = [];
       snapshot.forEach((docSnap) => {
         items.push(docSnap.data() as JournalEntry);
@@ -175,23 +207,44 @@ export function subscribeUserEntries(
       onData(items);
     },
     (error) => {
-      console.error('[Firestore Error] Failed to fetch entries:', error);
+      console.warn('[Firestore Public Subscription Notice]', error.message);
+      // Fallback to sample entries gracefully if offline or connecting
+      onData(SAMPLE_INITIAL_ENTRIES);
       if (onError) onError(error);
     }
   );
 }
 
 /**
- * Fetch all entries once
+ * Compatibility wrapper for subscribeUserEntries
  */
-export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> {
-  if (!userId) return [];
-  const entriesRef = getEntriesCollection(userId);
-  const q = query(entriesRef, orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
-  const items: JournalEntry[] = [];
-  snapshot.forEach((docSnap) => {
-    items.push(docSnap.data() as JournalEntry);
-  });
-  return items;
+export function subscribeUserEntries(
+  _userId: string | null | undefined,
+  onData: (entries: JournalEntry[]) => void,
+  onError?: (err: Error) => void
+) {
+  return subscribePublicEntries(onData, onError);
 }
+
+/**
+ * Fetch all public entries once
+ */
+export async function fetchPublicEntries(): Promise<JournalEntry[]> {
+  try {
+    const entriesRef = collection(db, 'entries');
+    const q = query(entriesRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return SAMPLE_INITIAL_ENTRIES;
+    }
+    const items: JournalEntry[] = [];
+    snapshot.forEach((docSnap) => {
+      items.push(docSnap.data() as JournalEntry);
+    });
+    return items;
+  } catch (err) {
+    console.error('Error fetching public entries:', err);
+    return SAMPLE_INITIAL_ENTRIES;
+  }
+}
+

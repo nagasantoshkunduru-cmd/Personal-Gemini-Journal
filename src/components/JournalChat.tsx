@@ -48,7 +48,7 @@ interface JournalChatProps {
   currentUser: UserAuthProfile | null;
   onSessionSaved: (newEntryId: string) => void;
   onCancel: () => void;
-  onRequireAuth: () => void;
+  onRequireAuth?: () => void;
 }
 
 const PERSONAS: Array<{
@@ -346,7 +346,11 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
 
   const handleCompleteSession = async () => {
     if (!currentUser) {
-      onRequireAuth();
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        alert('Please sign in to save your reflections and write to the journal.');
+      }
       return;
     }
 
@@ -381,8 +385,9 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
 
       const { preparedDocument } = await response.json();
 
-      setProcessingStep('Persisting isolated record to Cloud Firestore...');
-      const entryId = await saveJournalEntry(currentUser.uid, preparedDocument);
+      setProcessingStep('Persisting reflection to Cloud Firestore...');
+      const targetUserId = currentUser.uid;
+      const entryId = await saveJournalEntry(targetUserId, preparedDocument);
 
       setProcessingStep('Saved successfully!');
       setTimeout(() => {
@@ -550,6 +555,24 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             <span className="text-xs font-medium text-[#4285F4]">
               {processingStep || 'Processing conversation with Gemini AI...'}
             </span>
+          </div>
+        )}
+
+        {/* Unauthenticated Mode Warning */}
+        {!currentUser && (
+          <div className="bg-[#1C160E] border-b border-[#3E2D18] px-6 py-2 flex items-center justify-between flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-2 text-[#FBBF24]">
+              <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>You are writing in guest reflection mode. Sign in to save this session to your journal.</span>
+            </div>
+            {onRequireAuth && (
+              <button
+                onClick={onRequireAuth}
+                className="px-2.5 py-1 bg-[#FBBF24] hover:bg-[#F59E0B] text-black font-bold rounded-lg text-[11px] transition cursor-pointer"
+              >
+                Sign In to Save
+              </button>
+            )}
           </div>
         )}
 
