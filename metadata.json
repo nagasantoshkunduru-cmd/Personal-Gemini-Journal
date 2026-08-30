@@ -1,0 +1,6 @@
+{
+  "name": "Personal Gemini Journal",
+  "description": "Secure, production-grade AI journaling app with multi-turn reflection, automated summarization, sentiment analysis, and isolated Firestore persistence.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to verify user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to verify current user is the resource owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Isolated user scope: /users/{userId}
+    match /users/{userId} {
+      // Users can only read and update their own root user record
+      allow read, write: if isOwner(userId);
+
+      // Isolated journal entries: /users/{userId}/entries/{entryId}
+      match /entries/{entryId} {
+        // Enforce strict owner-only access for create, read, update, delete, list
+        allow read, write: if isOwner(userId);
+      }
+
+      // Isolated active sessions / scratchpads
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Catch-all: Deny any access to unspecified collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
