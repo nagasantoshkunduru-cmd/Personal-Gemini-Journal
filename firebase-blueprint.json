@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "User reflective journal entry generated from interactive multi-turn Gemini sessions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the journal entry"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the journal owner"
+        },
+        "title": {
+          "type": "string",
+          "description": "Synthesized title of the journal reflection"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Executive cognitive summary of the reflection"
+        },
+        "keyTakeaways": {
+          "type": "array",
+          "description": "Extracted key insights and actionable takeaways"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Categorization and thematic tags"
+        },
+        "sentiment": {
+          "type": "object",
+          "description": "Sentiment and emotional tone analytics"
+        },
+        "actionItems": {
+          "type": "array",
+          "description": "Concrete commitments or next steps"
+        },
+        "suggestedReflectionPrompt": {
+          "type": "string",
+          "description": "Next prompt for continued inquiry"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp in milliseconds"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp in milliseconds"
+        }
+      },
+      "required": ["id", "userId", "title", "summary", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/entries/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Isolated per-user collection storing reflective journal documents"
+    },
+    "/entries/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Global entries index with strict owner security constraints"
+    }
+  }
+}

@@ -108,21 +108,22 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Save / Update Journal Entry to Cloud Firestore (Public Access)
+ * Save / Update Journal Entry to Cloud Firestore (Strict User Isolation)
  */
 export async function saveJournalEntry(
   userIdOrEntry: string | (Omit<JournalEntry, 'id'> & { id?: string }),
   maybeEntry?: Omit<JournalEntry, 'id' | 'userId'> & { id?: string }
 ): Promise<string> {
-  let userId = 'public';
+  const currentAuthUid = auth.currentUser?.uid;
+  let targetUserId = currentAuthUid || 'anonymous';
   let entryData: any;
 
   if (typeof userIdOrEntry === 'string') {
-    userId = userIdOrEntry || 'public';
+    targetUserId = userIdOrEntry || currentAuthUid || 'anonymous';
     entryData = maybeEntry || {};
   } else {
     entryData = userIdOrEntry;
-    userId = entryData.userId || 'public';
+    targetUserId = entryData.userId || currentAuthUid || 'anonymous';
   }
 
   const entryId = entryData.id || `entry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -130,72 +131,54 @@ export async function saveJournalEntry(
   const fullEntry: JournalEntry = {
     ...entryData,
     id: entryId,
-    userId: userId,
+    userId: targetUserId,
     updatedAt: Date.now(),
     createdAt: entryData.createdAt || Date.now(),
   };
 
-  // Write to public entries collection
-  const publicEntryDoc = doc(db, 'entries', entryId);
-  await setDoc(publicEntryDoc, fullEntry, { merge: true });
-
-  // If a specific userId exists, also mirror to user collection for compatibility
-  if (userId && userId !== 'public') {
-    try {
-      const userEntryDoc = doc(db, 'users', userId, 'entries', entryId);
-      await setDoc(userEntryDoc, fullEntry, { merge: true });
-    } catch (e) {
-      console.warn('Could not mirror to user collection:', e);
-    }
-  }
+  // Write directly to user isolated subcollection /users/{userId}/entries/{entryId}
+  const userEntryDoc = doc(db, 'users', targetUserId, 'entries', entryId);
+  await setDoc(userEntryDoc, fullEntry, { merge: true });
 
   return entryId;
 }
 
 /**
- * Delete Journal Entry
+ * Delete Journal Entry from Isolated User Collection
  */
 export async function deleteJournalEntry(
   param1: string,
   param2?: string
 ): Promise<void> {
+  const currentAuthUid = auth.currentUser?.uid;
   const entryId = param2 ? param2 : param1;
-  const userId = param2 ? param1 : 'public';
+  const userId = (param2 ? param1 : currentAuthUid) || 'anonymous';
 
-  // Delete from public entries
-  try {
-    const publicDocRef = doc(db, 'entries', entryId);
-    await deleteDoc(publicDocRef);
-  } catch (e) {
-    console.error('Error deleting from public entries:', e);
-  }
-
-  // Delete from user collection if userId provided
-  if (userId && userId !== 'public') {
-    try {
-      const userDocRef = doc(db, 'users', userId, 'entries', entryId);
-      await deleteDoc(userDocRef);
-    } catch (e) {
-      // ignore
-    }
-  }
+  const userDocRef = doc(db, 'users', userId, 'entries', entryId);
+  await deleteDoc(userDocRef);
 }
 
 /**
- * Real-time subscription to public journal entries (Accessible to anyone without login)
+ * Real-time subscription to isolated user journal entries
  */
-export function subscribePublicEntries(
+export function subscribeUserEntries(
+  userId: string | null | undefined,
   onData: (entries: JournalEntry[]) => void,
   onError?: (err: Error) => void
 ) {
-  const entriesRef = collection(db, 'entries');
+  if (!userId) {
+    onData([]);
+    return () => {};
+  }
+
+  const entriesRef = collection(db, 'users', userId, 'entries');
   const q = query(entriesRef, orderBy('createdAt', 'desc'));
 
   return onSnapshot(
     q,
     (snapshot) => {
       if (snapshot.empty) {
-        // Return default sample entries if Firestore collection is fresh
+        // Return default sample entries for new user exploration
         onData(SAMPLE_INITIAL_ENTRIES);
         return;
       }
@@ -207,8 +190,7 @@ export function subscribePublicEntries(
       onData(items);
     },
     (error) => {
-      console.warn('[Firestore Public Subscription Notice]', error.message);
-      // Fallback to sample entries gracefully if offline or connecting
+      console.warn('[Firestore User Subscription Notice]', error.message);
       onData(SAMPLE_INITIAL_ENTRIES);
       if (onError) onError(error);
     }
@@ -216,22 +198,12 @@ export function subscribePublicEntries(
 }
 
 /**
- * Compatibility wrapper for subscribeUserEntries
+ * Fetch all entries for authenticated user
  */
-export function subscribeUserEntries(
-  _userId: string | null | undefined,
-  onData: (entries: JournalEntry[]) => void,
-  onError?: (err: Error) => void
-) {
-  return subscribePublicEntries(onData, onError);
-}
-
-/**
- * Fetch all public entries once
- */
-export async function fetchPublicEntries(): Promise<JournalEntry[]> {
+export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> {
   try {
-    const entriesRef = collection(db, 'entries');
+    if (!userId) return [];
+    const entriesRef = collection(db, 'users', userId, 'entries');
     const q = query(entriesRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
@@ -243,8 +215,9 @@ export async function fetchPublicEntries(): Promise<JournalEntry[]> {
     });
     return items;
   } catch (err) {
-    console.error('Error fetching public entries:', err);
+    console.error('Error fetching user entries:', err);
     return SAMPLE_INITIAL_ENTRIES;
   }
 }
+
 

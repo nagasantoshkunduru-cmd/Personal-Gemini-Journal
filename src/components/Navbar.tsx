@@ -9,10 +9,13 @@ import {
   Sparkles,
   Lock,
   ChevronDown,
-  Info
+  Info,
+  Sun,
+  Moon
 } from 'lucide-react';
 import type { UserAuthProfile } from '../types';
 import { signOut } from '../lib/firebase';
+import { useTheme } from '../lib/theme';
 
 interface NavbarProps {
   user: UserAuthProfile | null;
@@ -32,6 +35,7 @@ export function Navbar({
   onOpenSecurityInspector,
 }: NavbarProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#1E1E20]">
@@ -95,12 +99,27 @@ export function Navbar({
             </button>
           </div>
 
-          {/* Right Actions: New Entry + User Auth */}
-          <div className="flex items-center space-x-3">
+          {/* Right Actions: Theme Toggle + New Entry + User Auth */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Dark / Light Mode Toggle Button */}
+            <button
+              id="nav-theme-toggle-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#C0C0C0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#FBBF24]" />
+              ) : (
+                <Moon className="w-4 h-4 text-[#4285F4]" />
+              )}
+            </button>
+
             <button
               id="new-session-nav-btn"
               onClick={onOpenNewSession}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition"
+              className="flex items-center gap-1.5 py-2 px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Reflect & Chat</span>
@@ -113,7 +132,7 @@ export function Navbar({
                 <button
                   id="user-profile-menu-btn"
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition"
+                  className="flex items-center gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition cursor-pointer"
                 >
                   <span className="text-xs font-medium text-[#C0C0C0] max-w-[100px] truncate hidden sm:inline">
                     {user.displayName || (user.isAnonymous ? 'Public User' : 'User')}
@@ -149,12 +168,32 @@ export function Navbar({
                       </div>
                     </div>
 
+                    {/* Theme Toggle option inside dropdown */}
+                    <button
+                      onClick={() => {
+                        toggleTheme();
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center justify-between transition cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        {theme === 'dark' ? (
+                          <Sun className="w-4 h-4 text-[#FBBF24]" />
+                        ) : (
+                          <Moon className="w-4 h-4 text-[#4285F4]" />
+                        )}
+                        <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#2A2A2D] text-[#A0A0A0] font-medium">
+                        Toggle
+                      </span>
+                    </button>
+
                     <button
                       onClick={() => {
                         setShowUserDropdown(false);
                         onOpenSecurityInspector();
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center gap-2 transition cursor-pointer"
                     >
                       <ShieldCheck className="w-4 h-4 text-[#4ADE80]" />
                       View Security Rules
@@ -166,7 +205,7 @@ export function Navbar({
                         setShowUserDropdown(false);
                         await signOut();
                       }}
-                      className="w-full px-4 py-2 text-left text-xs text-[#F87171] hover:bg-[#F8717110] flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-xs text-[#F87171] hover:bg-[#F8717110] flex items-center gap-2 transition cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out

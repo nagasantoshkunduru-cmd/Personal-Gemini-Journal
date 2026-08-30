@@ -155,12 +155,12 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between py-1 border-b border-[#225030]">
                       <span className="text-[#A0A0A0]">Access Model:</span>
-                      <span className="font-bold text-[#4ADE80]">Public Read • Authenticated Write</span>
+                      <span className="font-bold text-[#4ADE80]">Mandatory Auth • Strict User Data Isolation</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#225030]">
                       <span className="text-[#A0A0A0]">Active User Scope:</span>
                       <span className="font-mono text-white">
-                        {currentUser ? `Authenticated (UID: ${currentUser.uid.slice(0, 10)}...)` : 'Visitor / Public Read-Only'}
+                        {currentUser ? `users/${currentUser.uid}` : 'Authenticating...'}
                       </span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#225030]">
@@ -169,7 +169,7 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
                     </div>
                     <div className="flex justify-between py-1 border-b border-[#225030]">
                       <span className="text-[#A0A0A0]">Firestore Access Rule Model:</span>
-                      <span className="font-bold text-[#4ADE80]">Public Read, request.auth != null for Write</span>
+                      <span className="font-bold text-[#4ADE80]">request.auth.uid == userId (Zero-Trust)</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-[#A0A0A0]">AI Schema Enforcement:</span>
@@ -184,34 +184,40 @@ export function SecurityInspector({ isOpen, onClose, currentUser }: SecurityInsp
           {activeTab === 'rules' && (
             <div className="space-y-3">
               <p className="text-xs text-[#808080]">
-                Firestore Security Rules deployed via Firebase Engine: Public read access for browsing, strict <code className="text-[#4285F4]">request.auth != null</code> constraint for writes and modifications.
+                Firestore Security Rules deployed via Firebase Engine. Enforces complete user isolation and denies unauthenticated access:
               </p>
               <div className="bg-[#0A0A0B] text-[#C0C0C0] p-4 rounded-xl font-mono text-xs overflow-x-auto border border-[#1E1E20]">
                 <pre>{`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Public journal entries: anyone can read, must be authenticated to write
-    match /entries/{entryId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User-scoped collections
+    // Isolated user-scoped journals: /users/{userId}/entries/{entryId}
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
 
       match /{allSubcollections=**} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // Fallback rule
+    // Entry collection with strict owner-only access
+    match /entries/{entryId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Fallback default deny
     match /{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }`}</pre>

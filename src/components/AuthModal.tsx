@@ -5,11 +5,12 @@ import type { UserAuthProfile } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
+  isDismissible?: boolean;
   onClose: () => void;
   onSuccess: (user: UserAuthProfile) => void;
 }
 
-export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+export function AuthModal({ isOpen, isDismissible = true, onClose, onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,9 +88,15 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   return (
     <div
       id="auth-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-opacity animate-in fade-in"
+      onClick={() => {
+        if (isDismissible) onClose();
+      }}
     >
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div
+        className="bg-[#0E0E10] border border-[#1E1E20] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-6 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">
           <div className="flex items-center space-x-3">
@@ -101,18 +108,21 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 {mode === 'signin' ? 'Sign In to Your Journal' : 'Create Secure Journal Account'}
               </h2>
               <p className="text-xs text-[#808080]">
-                Encrypted & Isolated Firebase Authentication
+                Strict Isolated User Authentication
               </p>
             </div>
           </div>
-          <button
-            id="close-auth-modal"
-            onClick={onClose}
-            className="text-[#808080] hover:text-[#E0E0E0] p-1.5 rounded-lg hover:bg-[#161618] transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {isDismissible && (
+            <button
+              id="close-auth-modal"
+              onClick={onClose}
+              className="text-[#808080] hover:text-[#E0E0E0] p-1.5 rounded-lg hover:bg-[#161618] transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
+
 
         <div className="p-6 space-y-4">
           {error && (

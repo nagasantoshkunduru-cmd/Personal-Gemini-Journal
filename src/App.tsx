@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { JournalEntry, UserAuthProfile } from './types';
-import { onAuthUserChanged, subscribePublicEntries, deleteJournalEntry } from './lib/firebase';
+import { onAuthUserChanged, subscribeUserEntries, deleteJournalEntry } from './lib/firebase';
 import { Navbar } from './components/Navbar';
 import { JournalList } from './components/JournalList';
 import { JournalChat } from './components/JournalChat';
@@ -16,22 +16,35 @@ export default function App() {
   const [activeView, setActiveView] = useState<'journal' | 'analytics'>('journal');
   const [isChatting, setIsChatting] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
-  // 1. Listen to Firebase Auth state changes (optional profile)
+  // 1. Mandatory Firebase Auth listener on app boot
   useEffect(() => {
     const unsubscribeAuth = onAuthUserChanged((profile) => {
       setCurrentUser(profile);
+      setAuthInitialized(true);
+      if (!profile) {
+        setIsAuthModalOpen(true);
+        setEntries([]);
+      } else {
+        setIsAuthModalOpen(false);
+      }
     });
 
     return () => unsubscribeAuth();
   }, []);
 
-  // 2. Real-time Public Firestore entries subscription (accessible immediately to all visitors)
+  // 2. Real-time User-Isolated Firestore entries subscription (tied to currentUser.uid)
   useEffect(() => {
-    const unsubscribeFirestore = subscribePublicEntries(
+    if (!currentUser?.uid) {
+      setEntries([]);
+      return;
+    }
+
+    const unsubscribeFirestore = subscribeUserEntries(
+      currentUser.uid,
       (data) => {
         setEntries(data);
       },
@@ -40,8 +53,10 @@ export default function App() {
       }
     );
 
-    return () => unsubscribeFirestore();
-  }, []);
+    return () => {
+      if (unsubscribeFirestore) unsubscribeFirestore();
+    };
+  }, [currentUser?.uid]);
 
   const handleStartNewSession = () => {
     if (!currentUser) {
@@ -138,11 +153,16 @@ export default function App() {
       />
 
       <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={isAuthModalOpen || !currentUser}
+        isDismissible={Boolean(currentUser)}
+        onClose={() => {
+          if (currentUser) {
+            setIsAuthModalOpen(false);
+          }
+        }}
         onSuccess={(user) => {
           setCurrentUser(user);
-          setIsChatting(true);
+          setIsAuthModalOpen(false);
         }}
       />
 
@@ -154,3 +174,4 @@ export default function App() {
     </div>
   );
 }
+
