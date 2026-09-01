@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X,
   Sparkles,
@@ -17,7 +17,8 @@ import {
   CheckCircle,
   Copy,
   Check,
-  Lock
+  Lock,
+  Edit3
 } from 'lucide-react';
 import type { JournalEntry, UserAuthProfile } from '../types';
 import { formatDate, formatTime, getSentimentColor } from '../lib/sanitize';
@@ -28,6 +29,7 @@ interface EntryDetailModalProps {
   currentUser?: UserAuthProfile | null;
   onClose: () => void;
   onDelete: (entryId: string) => Promise<void>;
+  onUpdateTitle?: (entryId: string, newTitle: string) => Promise<void>;
   onTagClick?: (tag: string) => void;
   onRequireAuth?: () => void;
 }
@@ -38,12 +40,25 @@ export function EntryDetailModal({
   currentUser,
   onClose,
   onDelete,
+  onUpdateTitle,
   onTagClick,
   onRequireAuth,
 }: EntryDetailModalProps) {
   const [showRawChat, setShowRawChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [titleSavedSuccess, setTitleSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (entry) {
+      setEditedTitle(entry.title || '');
+      setIsEditingTitle(false);
+      setTitleSavedSuccess(false);
+    }
+  }, [entry?.id, entry?.title]);
 
   if (!isOpen || !entry) return null;
 
@@ -93,6 +108,43 @@ ${entry.rawTranscript}
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!entry || !onUpdateTitle) return;
+    if (!currentUser) {
+      if (onRequireAuth) onRequireAuth();
+      return;
+    }
+    const trimmed = editedTitle.trim();
+    if (!trimmed) return;
+    if (trimmed === entry.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    setIsSavingTitle(true);
+    try {
+      await onUpdateTitle(entry.id, trimmed);
+      setIsEditingTitle(false);
+      setTitleSavedSuccess(true);
+      setTimeout(() => setTitleSavedSuccess(false), 2500);
+    } catch (err) {
+      console.error('Failed to update title:', err);
+    } finally {
+      setIsSavingTitle(false);
+    }
+  };
+
+  const handleKeyDownTitle = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveTitle();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditedTitle(entry.title || '');
+      setIsEditingTitle(false);
+    }
   };
 
   const handleDeleteEntry = async () => {
@@ -175,11 +227,69 @@ ${entry.rawTranscript}
 
         {/* Modal Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Header Info */}
+          {/* Header Info with Small Edit Option next to Name */}
           <div>
-            <h1 className="font-bold text-2xl text-white leading-tight">
-              {entry.title}
-            </h1>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2 max-w-xl">
+                <input
+                  id="edit-session-title-input"
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={handleKeyDownTitle}
+                  disabled={isSavingTitle}
+                  autoFocus
+                  placeholder="Enter session title..."
+                  className="font-bold text-xl sm:text-2xl text-white bg-[#161618] border border-[#4285F4] rounded-xl px-3 py-1.5 focus:outline-hidden w-full shadow-inner"
+                />
+                <button
+                  id="save-session-title-btn"
+                  onClick={handleSaveTitle}
+                  disabled={isSavingTitle || !editedTitle.trim()}
+                  className="p-2 bg-[#4285F4] hover:bg-[#3367D6] disabled:opacity-50 text-white rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
+                  title="Save title (Enter)"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  id="cancel-session-title-btn"
+                  onClick={() => {
+                    setEditedTitle(entry.title || '');
+                    setIsEditingTitle(false);
+                  }}
+                  disabled={isSavingTitle}
+                  className="p-2 bg-[#1E1E20] hover:bg-[#2A2A2D] text-[#A0A0A0] hover:text-white rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
+                  title="Cancel (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5 flex-wrap group/title">
+                <h1 className="font-bold text-xl sm:text-2xl text-white leading-tight">
+                  {entry.title}
+                </h1>
+                <button
+                  id="edit-session-name-btn"
+                  onClick={() => {
+                    setEditedTitle(entry.title || '');
+                    setIsEditingTitle(true);
+                  }}
+                  className="p-1.5 text-[#808080] hover:text-[#4285F4] hover:bg-[#4285F415] rounded-lg transition shrink-0 cursor-pointer flex items-center gap-1 text-xs font-medium"
+                  title="Edit session name"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px]">Edit name</span>
+                </button>
+                {titleSavedSuccess && (
+                  <span className="text-[11px] text-[#4ADE80] font-medium flex items-center gap-1 bg-[#4ADE8015] border border-[#4ADE8030] px-2 py-0.5 rounded-md animate-in fade-in">
+                    <Check className="w-3 h-3" />
+                    <span>Saved</span>
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-4 text-xs text-[#808080] mt-2">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-[#606060]" />

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -14,18 +14,30 @@ import {
   BookOpen,
   PlusCircle,
   Clock,
-  Layers
+  Layers,
+  Edit3,
+  Trash2,
+  ArrowRight,
+  Check,
+  X
 } from 'lucide-react';
-import type { JournalEntry, FilterState, SentimentType } from '../types';
+import type { JournalEntry, FilterState, SentimentType, UserAuthProfile } from '../types';
 import { formatDate, formatTime, getSentimentColor } from '../lib/sanitize';
+import { getDraft, clearDraft, JournalDraft } from '../lib/draftManager';
 
 interface JournalListProps {
   entries: JournalEntry[];
+  currentUser?: UserAuthProfile | null;
   onSelectEntry: (entry: JournalEntry) => void;
   onNewSession: () => void;
+  onUpdateTitle?: (entryId: string, newTitle: string) => Promise<void>;
 }
 
-export function JournalList({ entries, onSelectEntry, onNewSession }: JournalListProps) {
+export function JournalList({ entries, currentUser, onSelectEntry, onNewSession, onUpdateTitle }: JournalListProps) {
+  const [activeDraft, setActiveDraft] = useState<JournalDraft | null>(null);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [editingCardTitle, setEditingCardTitle] = useState('');
+  const [isSavingCardTitle, setIsSavingCardTitle] = useState(false);
   const [filterState, setFilterState] = useState<FilterState>({
     searchQuery: '',
     selectedTag: null,
@@ -33,6 +45,53 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
     sortBy: 'newest',
     dateRange: 'all',
   });
+
+  // Check for active draft
+  useEffect(() => {
+    if (currentUser?.uid) {
+      const draft = getDraft(currentUser.uid);
+      setActiveDraft(draft);
+    } else {
+      setActiveDraft(null);
+    }
+  }, [currentUser?.uid]);
+
+  const handleDiscardDraft = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentUser?.uid) {
+      clearDraft(currentUser.uid);
+      setActiveDraft(null);
+    }
+  };
+
+  const handleStartEditCardTitle = (e: React.MouseEvent, entry: JournalEntry) => {
+    e.stopPropagation();
+    setEditingCardId(entry.id);
+    setEditingCardTitle(entry.title || '');
+  };
+
+  const handleSaveCardTitle = async (e: React.MouseEvent | React.FormEvent, entryId: string) => {
+    e.stopPropagation();
+    if (!onUpdateTitle) return;
+    const trimmed = editingCardTitle.trim();
+    if (!trimmed) return;
+
+    setIsSavingCardTitle(true);
+    try {
+      await onUpdateTitle(entryId, trimmed);
+      setEditingCardId(null);
+    } catch (err) {
+      console.error('Failed to update card title:', err);
+    } finally {
+      setIsSavingCardTitle(false);
+    }
+  };
+
+  const handleCancelCardTitle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCardId(null);
+    setEditingCardTitle('');
+  };
 
   // Extract all unique tags across entries
   const allTags = useMemo(() => {
@@ -182,6 +241,60 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
         )}
       </div>
 
+      {/* Active In-Progress Draft Banner (if user has an unsaved draft) */}
+      {activeDraft && (
+        <div
+          id="active-draft-card"
+          className="bg-gradient-to-r from-[#161B26] via-[#10141D] to-[#121214] border border-[#4285F440] hover:border-[#4285F470] rounded-2xl p-5 shadow-lg transition flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-[#4285F420] text-[#4285F4] rounded-xl border border-[#4285F440] shrink-0 mt-0.5">
+              <Edit3 className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-[#4285F425] text-[#4285F4] border border-[#4285F450] flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] animate-pulse" />
+                  Unsaved Draft
+                </span>
+                <span className="text-[11px] text-[#808080] flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Autosaved {formatDate(activeDraft.lastUpdated)} • {formatTime(activeDraft.lastUpdated)}
+                </span>
+              </div>
+              <h3 className="font-bold text-base text-white">
+                {activeDraft.title || 'Untitled Reflection Session'}
+              </h3>
+              <p className="text-xs text-[#A0A0A0] line-clamp-2 max-w-xl">
+                {activeDraft.messages?.filter((m) => m.role === 'user').slice(-1)[0]?.content ||
+                  activeDraft.inputText ||
+                  'You have an in-progress journaling session ready to resume.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+            <button
+              id="discard-draft-list-btn"
+              onClick={handleDiscardDraft}
+              className="px-3 py-2 text-xs font-semibold text-[#808080] hover:text-[#F87171] hover:bg-[#F8717115] rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              title="Discard this unsaved draft"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Discard</span>
+            </button>
+            <button
+              id="resume-draft-list-btn"
+              onClick={onNewSession}
+              className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Resume Draft</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Entries List Header */}
       <div className="flex items-center justify-between px-2">
         <h2 className="text-xs uppercase tracking-widest text-[#606060] font-bold flex items-center gap-2">
@@ -243,9 +356,62 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-base text-white group-hover:text-[#4285F4] transition leading-snug">
-                    {entry.title}
-                  </h3>
+                  {editingCardId === entry.id ? (
+                    <div
+                      className="flex items-center gap-1.5 pt-0.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="text"
+                        value={editingCardTitle}
+                        onChange={(e) => setEditingCardTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCardTitle(e, entry.id);
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setEditingCardId(null);
+                          }
+                        }}
+                        disabled={isSavingCardTitle}
+                        autoFocus
+                        placeholder="Session name..."
+                        className="font-semibold text-sm text-white bg-[#1C1C1E] border border-[#4285F4] rounded-lg px-2.5 py-1 focus:outline-hidden w-full"
+                      />
+                      <button
+                        onClick={(e) => handleSaveCardTitle(e, entry.id)}
+                        disabled={isSavingCardTitle || !editingCardTitle.trim()}
+                        className="p-1.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-lg transition disabled:opacity-50 shrink-0 cursor-pointer"
+                        title="Save title"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={handleCancelCardTitle}
+                        disabled={isSavingCardTitle}
+                        className="p-1.5 bg-[#2A2A2D] hover:bg-[#3A3A3D] text-[#A0A0A0] hover:text-white rounded-lg transition shrink-0 cursor-pointer"
+                        title="Cancel"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-base text-white group-hover:text-[#4285F4] transition leading-snug flex-1">
+                        {entry.title}
+                      </h3>
+                      {onUpdateTitle && (
+                        <button
+                          onClick={(e) => handleStartEditCardTitle(e, entry)}
+                          className="p-1 text-[#606060] hover:text-[#4285F4] hover:bg-[#4285F415] rounded-md transition opacity-80 group-hover:opacity-100 shrink-0 cursor-pointer"
+                          title="Edit session name"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <p className="text-xs text-[#A0A0A0] line-clamp-3 leading-relaxed">
                     {entry.summary}
@@ -285,6 +451,11 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
             );
           })}
         </div>
+      )}
+
+      {/* Feed Bottom Sentinel */}
+      {entries.length > 0 && (
+        <div id="journal-feed-bottom-sentinel" className="h-6 w-full" aria-hidden="true" />
       )}
     </div>
   );

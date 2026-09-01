@@ -8,6 +8,7 @@ import {
   signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  updateProfile,
   User,
 } from 'firebase/auth';
 import {
@@ -119,16 +120,64 @@ function initFirestore() {
 export const db = initFirestore();
 
 /**
+ * Extract name portion of an email address as a reliable fallback.
+ */
+export function getEmailNameFallback(email?: string | null): string {
+  if (email && email.includes('@')) {
+    const namePart = email.split('@')[0];
+    if (namePart && namePart.trim()) return namePart.trim();
+  }
+  return 'User';
+}
+
+/**
  * Format Firebase User into app profile format
  */
 export function formatUserProfile(user: User | null): UserAuthProfile | null {
   if (!user) return null;
+  const emailFallback = getEmailNameFallback(user.email);
   return {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName || (user.isAnonymous ? 'Public Contributor' : 'Journaler'),
+    displayName: user.displayName || (user.isAnonymous ? 'Guest' : emailFallback),
     photoURL: user.photoURL,
     isAnonymous: user.isAnonymous,
+  };
+}
+
+/**
+ * Update authenticated user's display name across Firebase Auth and Firestore user profile.
+ */
+export async function updateUserDisplayName(newDisplayName: string): Promise<UserAuthProfile> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error('Authentication required: No active user.');
+
+  const fallback = getEmailNameFallback(currentUser.email);
+  const trimmed = newDisplayName.trim() || fallback;
+
+  // 1. Update Firebase Auth user profile
+  await updateProfile(currentUser, {
+    displayName: trimmed,
+  });
+
+  // 2. Synchronize to Firestore user profile document (/users/{userId})
+  try {
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userDocRef, {
+      uid: currentUser.uid,
+      displayName: trimmed,
+      email: currentUser.email || null,
+      updatedAt: Date.now(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn('Non-blocking user profile document sync:', err);
+  }
+
+  const profile = formatUserProfile(currentUser);
+  if (!profile) throw new Error('Failed to retrieve updated profile');
+  return {
+    ...profile,
+    displayName: trimmed,
   };
 }
 
@@ -241,6 +290,34 @@ export async function saveJournalEntry(
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, writePath);
     return entryId;
+  }
+}
+
+/**
+ * Update Journal Entry Title in Cloud Firestore with strict User ID enforcement.
+ */
+export async function updateJournalEntryTitle(
+  entryId: string,
+  newTitle: string,
+  optionalUserId?: string
+): Promise<void> {
+  const currentAuthUid = auth.currentUser?.uid;
+  const userId = optionalUserId || currentAuthUid;
+
+  if (!userId) {
+    throw new Error('Authentication required: Current user UID is missing for update.');
+  }
+
+  const trimmedTitle = newTitle.trim() || 'Untitled Reflection';
+  const writePath = `users/${userId}/entries/${entryId}`;
+  try {
+    const userDocRef = doc(db, 'users', userId, 'entries', entryId);
+    await setDoc(userDocRef, { title: trimmedTitle, updatedAt: Date.now() }, { merge: true });
+
+    const rootDocRef = doc(db, 'entries', entryId);
+    await setDoc(rootDocRef, { title: trimmedTitle, updatedAt: Date.now() }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, writePath);
   }
 }
 

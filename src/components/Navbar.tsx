@@ -17,15 +17,19 @@ import {
   Shield
 } from 'lucide-react';
 import type { UserAuthProfile } from '../types';
-import { signOut } from '../lib/firebase';
+import { signOut, getEmailNameFallback } from '../lib/firebase';
 import { useTheme } from '../lib/theme';
 
 interface NavbarProps {
   user: UserAuthProfile | null;
   activeView: 'journal' | 'analytics';
   setActiveView: (view: 'journal' | 'analytics') => void;
+  isChatting?: boolean;
+  sessionTitle?: string;
+  onSessionTitleChange?: (title: string) => void;
   onOpenNewSession: () => void;
   onOpenAuth: () => void;
+  onOpenProfile?: () => void;
   onOpenSecurityInspector: () => void;
   onGoBack?: () => void;
   canGoBack?: boolean;
@@ -35,8 +39,12 @@ export function Navbar({
   user,
   activeView,
   setActiveView,
+  isChatting = false,
+  sessionTitle = '',
+  onSessionTitleChange,
   onOpenNewSession,
   onOpenAuth,
+  onOpenProfile,
   onOpenSecurityInspector,
   onGoBack,
   canGoBack = true,
@@ -44,6 +52,10 @@ export function Navbar({
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  // Dynamic user display name & avatar initial calculation
+  const userDisplayName = user ? (user.displayName || getEmailNameFallback(user.email)) : '';
+  const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
 
   // Close mobile menu on escape key or resize
   useEffect(() => {
@@ -57,12 +69,13 @@ export function Navbar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#1E1E20]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left: Dynamic Back Button & Brand Identity */}
-          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          {/* Left: Dynamic Back Button & Brand Identity / Dynamic Session Title Input */}
+          <div className={`flex items-center space-x-2 sm:space-x-3 ${isChatting ? 'min-w-0 flex-1 max-w-[220px] xs:max-w-[280px] sm:max-w-sm md:max-w-md' : 'shrink-0'}`}>
             {/* Top Left Back Button with Left Arrow (Visible when navigating away from Home/Dashboard) */}
             {canGoBack && onGoBack && (
               <button
@@ -77,20 +90,43 @@ export function Navbar({
               </button>
             )}
 
-            {/* Brand Logo & Title */}
-            <div className="flex items-center space-x-2 shrink-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
-                <Sparkles className="w-4 h-4" />
+            {/* Dynamic Session Title Input when in active reflection session */}
+            {isChatting ? (
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <input
+                    id="navbar-session-title-input"
+                    type="text"
+                    value={sessionTitle}
+                    onChange={(e) => onSessionTitleChange?.(e.target.value)}
+                    placeholder="Session Title (or auto-name)"
+                    className="font-bold text-xs sm:text-sm md:text-base text-white bg-transparent border-b border-transparent hover:border-[#2A2A2D] focus:border-[#4285F4] focus:outline-hidden px-1 py-0.5 rounded transition w-full truncate placeholder-[#606060]"
+                    title="Enter reflection session title"
+                  />
+                  <span className="text-[10px] uppercase tracking-widest text-[#4ADE80] font-bold flex items-center gap-1 px-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse shrink-0" />
+                    <span className="truncate">Active Session</span>
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-base sm:text-lg text-white tracking-tight leading-none whitespace-nowrap">
-                  Gemini Journal
-                </span>
-                <span className="hidden lg:inline-block text-[10px] uppercase tracking-widest text-[#808080] font-bold mt-0.5">
-                  GCP • Firestore Isolated • Gemini 3.6 Flash
-                </span>
+            ) : (
+              <div className="flex items-center space-x-2 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-base sm:text-lg text-white tracking-tight leading-none whitespace-nowrap">
+                    Gemini Journal
+                  </span>
+                  <span className="hidden lg:inline-block text-[10px] uppercase tracking-widest text-[#808080] font-bold mt-0.5">
+                    GCP • Firestore Isolated • Gemini 3.6 Flash
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Desktop & Tablet Center Navigation (Visible on md+) */}
@@ -156,14 +192,16 @@ export function Navbar({
               )}
             </button>
 
-            <button
-              id="new-session-nav-btn"
-              onClick={onOpenNewSession}
-              className="flex items-center gap-1.5 py-2 px-3 lg:px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer shrink-0 whitespace-nowrap"
-            >
-              <PlusCircle className="w-4 h-4 shrink-0" />
-              <span>Reflect & Chat</span>
-            </button>
+            {!isChatting && (
+              <button
+                id="new-session-nav-btn"
+                onClick={onOpenNewSession}
+                className="flex items-center gap-1.5 py-2 px-3 lg:px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4 shrink-0" />
+                <span>Reflect & Chat</span>
+              </button>
+            )}
 
             {/* User Profile or Public Access Status */}
             {user ? (
@@ -173,19 +211,19 @@ export function Navbar({
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
                   className="flex items-center gap-1.5 lg:gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition cursor-pointer shrink-0"
                 >
-                  <span className="text-xs font-medium text-[#C0C0C0] max-w-[70px] lg:max-w-[100px] truncate hidden sm:inline">
-                    {user.displayName || (user.isAnonymous ? 'Public User' : 'User')}
+                  <span className="text-xs font-semibold text-[#E0E0E0] max-w-[80px] lg:max-w-[120px] truncate hidden sm:inline">
+                    {userDisplayName}
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-[#2A2A2D] text-[#4285F4] flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs border border-[#4285F4]/40">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
-                        alt="Profile"
+                        alt={userDisplayName}
                         referrerPolicy="no-referrer"
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      user.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />
+                      userInitial
                     )}
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-[#808080] mr-1 shrink-0" />
@@ -194,18 +232,48 @@ export function Navbar({
                 {/* Dropdown */}
                 {showUserDropdown && (
                   <div className="absolute right-0 mt-2 w-64 bg-[#161618] border border-[#2A2A2D] rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-4 py-2 border-b border-[#2A2A2D]">
-                      <p className="text-xs font-bold text-white truncate">
-                        {user.displayName || 'Reflective Journaler'}
-                      </p>
-                      <p className="text-[11px] text-[#808080] truncate">
-                        {user.email || 'Public Session'}
-                      </p>
+                    <div className="px-4 py-2.5 border-b border-[#2A2A2D]">
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center text-sm font-bold shrink-0 border border-[#4285F4]/40 shadow-xs">
+                          {user.photoURL ? (
+                            <img
+                              src={user.photoURL}
+                              alt={userDisplayName}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            userInitial
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-white truncate">
+                            {userDisplayName}
+                          </p>
+                          <p className="text-[11px] text-[#808080] truncate font-mono">
+                            {user.email || (user.isAnonymous ? 'Guest Account' : 'Authenticated')}
+                          </p>
+                        </div>
+                      </div>
                       <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-0.5 rounded-md w-fit font-mono">
                         <Lock className="w-3 h-3" />
                         <span>Authenticated • Write Access</span>
                       </div>
                     </div>
+
+                    {onOpenProfile && (
+                      <button
+                        id="nav-edit-display-name-btn"
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          onOpenProfile();
+                        }}
+                        className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] hover:text-white flex items-center gap-2 transition cursor-pointer"
+                      >
+                        <User className="w-4 h-4 text-[#4285F4]" />
+                        <span>Edit Display Name</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => {
@@ -236,6 +304,8 @@ export function Navbar({
                       <ShieldCheck className="w-4 h-4 text-[#4ADE80]" />
                       View Security Rules
                     </button>
+
+                    <div className="border-t border-[#2A2A2D] my-1" />
 
                     <button
                       id="sign-out-btn"
@@ -268,16 +338,18 @@ export function Navbar({
 
           {/* Mobile Right Controls: Fast Action + Hamburger Button (< md) */}
           <div className="flex md:hidden items-center space-x-2 shrink-0">
-            {/* Reflect & Chat Action on Mobile */}
-            <button
-              id="mobile-quick-reflect-btn"
-              onClick={onOpenNewSession}
-              aria-label="Start reflection and chat session"
-              className="flex items-center gap-1.5 py-2 px-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Reflect & Chat</span>
-            </button>
+            {/* Reflect & Chat Action on Mobile (hidden when already chatting) */}
+            {!isChatting && (
+              <button
+                id="mobile-quick-reflect-btn"
+                onClick={onOpenNewSession}
+                aria-label="Start reflection and chat session"
+                className="flex items-center gap-1.5 py-2 px-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Reflect & Chat</span>
+              </button>
+            )}
 
             {/* Mobile Hamburger Menu Toggle Button */}
             <button
@@ -302,33 +374,46 @@ export function Navbar({
         <div className="md:hidden border-t border-[#1E1E20] bg-[#0E0E10] px-4 pt-3 pb-6 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
           {/* User Status Card */}
           {user ? (
-            <div className="p-3 bg-[#161618] border border-[#2A2A2D] rounded-2xl flex items-center justify-between">
+            <div className="p-3 bg-[#161618] border border-[#2A2A2D] rounded-2xl flex items-center justify-between gap-2">
               <div className="flex items-center space-x-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#2A2A2D] text-[#4285F4] flex items-center justify-center text-sm font-bold shrink-0 border border-[#3A3A3D]">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center text-sm font-bold shrink-0 border border-[#4285F4]/40 shadow-xs">
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
-                      alt="Profile"
+                      alt={userDisplayName}
                       referrerPolicy="no-referrer"
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    user.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />
+                    userInitial
                   )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-white truncate">
-                    {user.displayName || 'Reflective Journaler'}
+                    {userDisplayName}
                   </p>
-                  <p className="text-[11px] text-[#808080] truncate">
-                    {user.email || (user.isAnonymous ? 'Public Session' : 'Signed In')}
+                  <p className="text-[11px] text-[#808080] truncate font-mono">
+                    {user.email || (user.isAnonymous ? 'Guest Account' : 'Signed In')}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-[10px] text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-0.5 rounded-md shrink-0">
-                <Lock className="w-3 h-3" />
-                <span>Active</span>
-              </div>
+              {onOpenProfile ? (
+                <button
+                  id="mobile-edit-profile-btn"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenProfile();
+                  }}
+                  className="px-2.5 py-1.5 text-[11px] font-semibold text-[#4285F4] bg-[#4285F415] hover:bg-[#4285F425] border border-[#4285F440] rounded-xl transition shrink-0 cursor-pointer"
+                >
+                  Edit Name
+                </button>
+              ) : (
+                <div className="flex items-center gap-1 text-[10px] text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-0.5 rounded-md shrink-0">
+                  <Lock className="w-3 h-3" />
+                  <span>Active</span>
+                </div>
+              )}
             </div>
           ) : (
             <button

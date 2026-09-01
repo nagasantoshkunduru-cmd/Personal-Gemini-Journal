@@ -76,6 +76,19 @@ export interface JournalEntry {
   reflectionPromptForTomorrow: string;
   wordCount: number;
   turnCount: number;
+  isDraft?: boolean;
+}
+
+export interface JournalDraft {
+  id: string;
+  userId: string;
+  title: string;
+  inputText: string;
+  messages: ChatMessage[];
+  selectedPersona: JournalPersonaRole;
+  selectedModelTier: ModelTier;
+  useSearchGrounding: boolean;
+  lastUpdated: number;
 }
 
 export interface JournalPrompt {
