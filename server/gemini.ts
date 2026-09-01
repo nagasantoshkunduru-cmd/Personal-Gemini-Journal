@@ -49,8 +49,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * - gemini-3.1-flash-live-preview: Real-time audio voice dialogue (Live API)
  */
 export const MODEL_MAP = {
-  pro: 'gemini-3.1-pro-preview',
-  flash: 'gemini-3.5-flash',
+  pro: 'gemini-3.7-flash',
+  flash: 'gemini-3.6-flash',
   lite: 'gemini-3.1-flash-lite',
   live: 'gemini-3.1-flash-live-preview',
   transcribe: 'gemini-3.5-transcribe',
@@ -58,10 +58,10 @@ export const MODEL_MAP = {
 };
 
 const CANDIDATE_FALLBACKS = [
-  'gemini-3.5-flash',
-  'gemini-3.7-flash',
+  'gemini-3.6-flash',
   'gemini-3.1-flash-lite',
   'gemini-flash-latest',
+  'gemini-3.7-flash',
 ];
 
 /**

@@ -28,7 +28,12 @@ export function AuthModal({ isOpen, isDismissible = true, onClose, onSuccess }: 
       onClose();
     } catch (err: any) {
       console.error('Google Auth Error:', err);
-      setError(err.message || 'Failed to sign in with Google.');
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+        setError(`Domain "${domain}" is not authorized in Firebase. Add "${domain}" to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else {
+        setError(err.message || 'Failed to sign in with Google.');
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +63,10 @@ export function AuthModal({ isOpen, isDismissible = true, onClose, onSuccess }: 
       onClose();
     } catch (err: any) {
       console.error('Email Auth Error:', err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+        setError(`Domain "${domain}" is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password credentials.');
       } else if (err.code === 'auth/email-already-in-use') {
         setError('This email is already registered. Please sign in instead.');
@@ -79,7 +87,12 @@ export function AuthModal({ isOpen, isDismissible = true, onClose, onSuccess }: 
       onClose();
     } catch (err: any) {
       console.error('Guest Auth Error:', err);
-      setError(err.message || 'Guest sign-in failed.');
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+        setError(`Domain "${domain}" is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else {
+        setError(err.message || 'Guest sign-in failed.');
+      }
     } finally {
       setLoading(false);
     }

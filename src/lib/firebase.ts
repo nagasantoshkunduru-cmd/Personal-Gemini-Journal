@@ -159,7 +159,7 @@ export async function saveJournalEntry(
 
   const entryId = entryData.id || `entry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-  const fullEntry: JournalEntry = {
+  const rawEntry: JournalEntry = {
     ...entryData,
     id: entryId,
     userId: targetUserId,
@@ -167,9 +167,12 @@ export async function saveJournalEntry(
     createdAt: entryData.createdAt || Date.now(),
   };
 
+  // Strip undefined values for clean zero-crash Firestore payloads
+  const cleanPayload = JSON.parse(JSON.stringify(rawEntry));
+
   // Write directly to user isolated subcollection /users/{userId}/entries/{entryId}
   const userEntryDoc = doc(db, 'users', targetUserId, 'entries', entryId);
-  await setDoc(userEntryDoc, fullEntry, { merge: true });
+  await setDoc(userEntryDoc, cleanPayload, { merge: true });
 
   return entryId;
 }

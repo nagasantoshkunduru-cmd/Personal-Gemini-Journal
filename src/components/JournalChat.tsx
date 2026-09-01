@@ -95,15 +95,15 @@ const MODEL_OPTIONS: Array<{
   desc: string;
 }> = [
   {
-    id: 'gemini-3.5-flash',
-    name: 'Gemini 3.5 Flash',
-    badge: 'Balanced & Search',
-    desc: 'Versatile, high-speed reasoning with Google Search Grounding support',
+    id: 'gemini-3.6-flash',
+    name: 'Gemini 3.6 Flash',
+    badge: 'Primary & Grounding',
+    desc: 'Empathetic reasoning, fast brainstorming, and Google Search Grounding support',
   },
   {
-    id: 'gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro',
-    badge: 'Deep Cognitive',
+    id: 'gemini-3.7-flash',
+    name: 'Gemini 3.7 Flash',
+    badge: 'Deep Reasoning',
     desc: 'Complex introspective analysis and nuanced psychological reframing',
   },
   {
@@ -147,7 +147,7 @@ export function JournalChat({
   const [inputText, setInputText] = useState('');
   const [customTitle, setCustomTitle] = useState('');
   const [selectedPersona, setSelectedPersona] = useState<JournalPersonaRole>('socratic');
-  const [selectedModelTier, setSelectedModelTier] = useState<ModelTier>('gemini-3.5-flash');
+  const [selectedModelTier, setSelectedModelTier] = useState<ModelTier>('gemini-3.6-flash');
   const [useSearchGrounding, setUseSearchGrounding] = useState<boolean>(false);
   const [isAiReplying, setIsAiReplying] = useState(false);
   const [isFinishingSession, setIsFinishingSession] = useState(false);
