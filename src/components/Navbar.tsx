@@ -93,14 +93,14 @@ export function Navbar({
             </div>
           </div>
 
-          {/* Desktop Center Navigation (Visible on md+) */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Desktop & Tablet Center Navigation (Visible on md+) */}
+          <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
             {/* View Toggles */}
-            <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium">
+            <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium shrink-0">
               <button
                 id="nav-journal-view-btn"
                 onClick={() => setActiveView('journal')}
-                className={`px-3 py-1.5 rounded-lg transition ${
+                className={`px-2.5 lg:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                   activeView === 'journal'
                     ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
                     : 'text-[#808080] hover:text-[#E0E0E0]'
@@ -111,14 +111,16 @@ export function Navbar({
               <button
                 id="nav-analytics-view-btn"
                 onClick={() => setActiveView('analytics')}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition ${
+                className={`px-2.5 lg:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition whitespace-nowrap ${
                   activeView === 'analytics'
                     ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
                     : 'text-[#808080] hover:text-[#E0E0E0]'
                 }`}
               >
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span>Intelligence Insights</span>
+                <BarChart3 className="w-3.5 h-3.5 text-[#9B72F3] shrink-0" />
+                <span>
+                  <span className="hidden xl:inline">Intelligence </span>Insights
+                </span>
               </button>
             </div>
 
@@ -127,23 +129,25 @@ export function Navbar({
               id="security-inspector-badge-btn"
               onClick={onOpenSecurityInspector}
               title="Click to view full Security Architecture and Threat Model"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] shrink-0" />
               <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-              <span>Vault: Protected</span>
+              <span>
+                <span className="hidden xl:inline">Vault: </span>Protected
+              </span>
             </button>
           </div>
 
-          {/* Desktop Right Actions: Theme Toggle + New Entry + User Profile (Visible on md+) */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Desktop & Tablet Right Actions (Visible on md+) */}
+          <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
             {/* Dark / Light Mode Toggle Button */}
             <button
               id="nav-theme-toggle-btn"
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#C0C0C0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs"
+              className="p-2 rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#C0C0C0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs shrink-0"
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-[#FBBF24]" />
@@ -155,24 +159,24 @@ export function Navbar({
             <button
               id="new-session-nav-btn"
               onClick={onOpenNewSession}
-              className="flex items-center gap-1.5 py-2 px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer"
+              className="flex items-center gap-1.5 py-2 px-3 lg:px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4 shrink-0" />
               <span>Reflect & Chat</span>
             </button>
 
             {/* User Profile or Public Access Status */}
             {user ? (
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   id="user-profile-menu-btn"
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="flex items-center gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition cursor-pointer"
+                  className="flex items-center gap-1.5 lg:gap-2 p-1 pl-2 bg-[#161618] rounded-full border border-[#2A2A2D] hover:border-[#3A3A3D] transition cursor-pointer shrink-0"
                 >
-                  <span className="text-xs font-medium text-[#C0C0C0] max-w-[100px] truncate">
+                  <span className="text-xs font-medium text-[#C0C0C0] max-w-[70px] lg:max-w-[100px] truncate hidden sm:inline">
                     {user.displayName || (user.isAnonymous ? 'Public User' : 'User')}
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-[#2A2A2D] text-[#4285F4] flex items-center justify-center text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full bg-[#2A2A2D] text-[#4285F4] flex items-center justify-center text-xs font-bold shrink-0">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
@@ -184,7 +188,7 @@ export function Navbar({
                       user.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />
                     )}
                   </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#808080] mr-1" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#808080] mr-1 shrink-0" />
                 </button>
 
                 {/* Dropdown */}

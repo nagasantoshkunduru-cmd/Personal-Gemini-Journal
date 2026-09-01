@@ -18,12 +18,62 @@ import {
   deleteDoc,
   onSnapshot,
   query,
+  where,
   orderBy,
   getDocs,
 } from 'firebase/firestore';
 import type { JournalEntry, UserAuthProfile } from '../types';
 import { SAMPLE_INITIAL_ENTRIES } from './sampleData';
 import firebaseConfig from '../../firebase-applet-config.json';
+
+// Standardized Firestore Error Tracking per Firebase Integration Guidelines
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const currentUser = auth.currentUser;
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: currentUser?.uid || null,
+      email: currentUser?.email || null,
+      emailVerified: currentUser?.emailVerified || null,
+      isAnonymous: currentUser?.isAnonymous || null,
+      tenantId: currentUser?.tenantId || null,
+      providerInfo: currentUser?.providerData?.map((provider) => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || [],
+    },
+    operationType,
+    path,
+  };
+  console.error('[Firestore Error Diagnostic]:', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 // Build effective Firebase config with fallback to environment variables
 const rawConfig = (firebaseConfig as any) || {};
@@ -139,26 +189,33 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Save / Update Journal Entry to Cloud Firestore (Strict User Isolation)
+ * Save / Update Journal Entry to Cloud Firestore with strict User ID enforcement.
+ * Ensures the document explicitly includes the current user's UID and writes to isolated user path.
  */
 export async function saveJournalEntry(
   userIdOrEntry: string | (Omit<JournalEntry, 'id'> & { id?: string }),
   maybeEntry?: Omit<JournalEntry, 'id' | 'userId'> & { id?: string }
 ): Promise<string> {
   const currentAuthUid = auth.currentUser?.uid;
-  let targetUserId = currentAuthUid || 'anonymous';
+  let targetUserId = currentAuthUid;
   let entryData: any;
 
   if (typeof userIdOrEntry === 'string') {
-    targetUserId = userIdOrEntry || currentAuthUid || 'anonymous';
+    targetUserId = userIdOrEntry || currentAuthUid;
     entryData = maybeEntry || {};
   } else {
     entryData = userIdOrEntry;
-    targetUserId = entryData.userId || currentAuthUid || 'anonymous';
+    targetUserId = entryData.userId || currentAuthUid;
+  }
+
+  // Strictly enforce user UID presence
+  if (!targetUserId) {
+    throw new Error('Authentication required: Current user UID is missing.');
   }
 
   const entryId = entryData.id || `entry_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+  // Explicitly embed targetUserId as the immutable owner UID
   const rawEntry: JournalEntry = {
     ...entryData,
     id: entryId,
@@ -170,30 +227,51 @@ export async function saveJournalEntry(
   // Strip undefined values for clean zero-crash Firestore payloads
   const cleanPayload = JSON.parse(JSON.stringify(rawEntry));
 
-  // Write directly to user isolated subcollection /users/{userId}/entries/{entryId}
-  const userEntryDoc = doc(db, 'users', targetUserId, 'entries', entryId);
-  await setDoc(userEntryDoc, cleanPayload, { merge: true });
+  const writePath = `users/${targetUserId}/entries/${entryId}`;
+  try {
+    // 1. Write to isolated user collection: /users/{userId}/entries/{entryId}
+    const userEntryDoc = doc(db, 'users', targetUserId, 'entries', entryId);
+    await setDoc(userEntryDoc, cleanPayload, { merge: true });
 
-  return entryId;
+    // 2. Write to global entries collection with explicit userId for strict where('userId', '==', currentUser.uid) queries
+    const rootEntryDoc = doc(db, 'entries', entryId);
+    await setDoc(rootEntryDoc, cleanPayload, { merge: true });
+
+    return entryId;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, writePath);
+    return entryId;
+  }
 }
 
 /**
  * Delete Journal Entry from Isolated User Collection
  */
 export async function deleteJournalEntry(
-  param1: string,
-  param2?: string
+  entryId: string,
+  optionalUserId?: string
 ): Promise<void> {
   const currentAuthUid = auth.currentUser?.uid;
-  const entryId = param2 ? param2 : param1;
-  const userId = (param2 ? param1 : currentAuthUid) || 'anonymous';
+  const userId = optionalUserId || currentAuthUid;
 
-  const userDocRef = doc(db, 'users', userId, 'entries', entryId);
-  await deleteDoc(userDocRef);
+  if (!userId) {
+    throw new Error('Authentication required: Current user UID is missing for deletion.');
+  }
+
+  const deletePath = `users/${userId}/entries/${entryId}`;
+  try {
+    const userDocRef = doc(db, 'users', userId, 'entries', entryId);
+    await deleteDoc(userDocRef);
+
+    const rootDocRef = doc(db, 'entries', entryId);
+    await deleteDoc(rootDocRef).catch(() => {});
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, deletePath);
+  }
 }
 
 /**
- * Real-time subscription to isolated user journal entries
+ * Real-time subscription to user journal entries with strict where('userId', '==', currentUser.uid) query filtering
  */
 export function subscribeUserEntries(
   userId: string | null | undefined,
@@ -205,52 +283,75 @@ export function subscribeUserEntries(
     return () => {};
   }
 
+  const path = `users/${userId}/entries`;
   const entriesRef = collection(db, 'users', userId, 'entries');
-  const q = query(entriesRef, orderBy('createdAt', 'desc'));
+
+  // Strictly filter by where('userId', '==', currentUser.uid)
+  const q = query(
+    entriesRef,
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
 
   return onSnapshot(
     q,
     (snapshot) => {
       if (snapshot.empty) {
-        // Return default sample entries for new user exploration
-        onData(SAMPLE_INITIAL_ENTRIES);
+        // Return empty list for brand new accounts with no entries
+        onData([]);
         return;
       }
 
       const items: JournalEntry[] = [];
       snapshot.forEach((docSnap) => {
-        items.push(docSnap.data() as JournalEntry);
+        const item = docSnap.data() as JournalEntry;
+        // Verify explicit UID matching
+        if (item.userId === userId) {
+          items.push(item);
+        }
       });
+
       onData(items);
     },
     (error) => {
       console.warn('[Firestore User Subscription Notice]', error.message);
-      onData(SAMPLE_INITIAL_ENTRIES);
-      if (onError) onError(error);
+      try {
+        handleFirestoreError(error, OperationType.LIST, path);
+      } catch (err) {
+        if (onError) onError(err as Error);
+      }
     }
   );
 }
 
 /**
- * Fetch all entries for authenticated user
+ * Fetch all entries for authenticated user with strict where('userId', '==', currentUser.uid) filtering
  */
 export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> {
+  if (!userId) return [];
+  const path = `users/${userId}/entries`;
   try {
-    if (!userId) return [];
     const entriesRef = collection(db, 'users', userId, 'entries');
-    const q = query(entriesRef, orderBy('createdAt', 'desc'));
+    const q = query(
+      entriesRef,
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
-      return SAMPLE_INITIAL_ENTRIES;
+      return [];
     }
     const items: JournalEntry[] = [];
     snapshot.forEach((docSnap) => {
-      items.push(docSnap.data() as JournalEntry);
+      const data = docSnap.data() as JournalEntry;
+      if (data.userId === userId) {
+        items.push(data);
+      }
     });
     return items;
   } catch (err) {
-    console.error('Error fetching user entries:', err);
-    return SAMPLE_INITIAL_ENTRIES;
+    handleFirestoreError(err, OperationType.LIST, path);
+    return [];
   }
 }
 

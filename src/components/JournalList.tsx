@@ -98,9 +98,9 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
             />
           </div>
 
-          {/* Sort By Dropdown */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex items-center">
+          {/* Sort By Dropdown & New Entry Button */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+            <div className="relative flex items-center shrink-0">
               <ArrowUpDown className="w-3.5 h-3.5 text-[#606060] absolute left-3 pointer-events-none" />
               <select
                 id="sort-entries-select"
@@ -118,10 +118,10 @@ export function JournalList({ entries, onSelectEntry, onNewSession }: JournalLis
             <button
               id="new-entry-list-btn"
               onClick={onNewSession}
-              className="flex items-center gap-1.5 py-2.5 px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition shrink-0"
+              className="flex items-center gap-1.5 py-2.5 px-3.5 sm:px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition shrink-0 whitespace-nowrap cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              New Entry
+              <PlusCircle className="w-4 h-4 shrink-0" />
+              <span>New Entry</span>
             </button>
           </div>
         </div>

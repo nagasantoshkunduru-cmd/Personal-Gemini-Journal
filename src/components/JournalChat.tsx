@@ -431,31 +431,31 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
           </div>
 
           {/* Quick Action Tools: Live Voice Studio & Grounded Search Explorer */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               id="open-live-voice-btn"
               onClick={() => setIsVoiceStudioOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 whitespace-nowrap cursor-pointer"
               title="Open Gemini Live Voice Conversation Studio"
             >
-              <Radio className="w-3.5 h-3.5 text-[#4ADE80] animate-pulse" />
-              <span className="hidden sm:inline">Live Voice</span>
+              <Radio className="w-3.5 h-3.5 text-[#4ADE80] animate-pulse shrink-0" />
+              <span>Live Voice</span>
             </button>
 
             <button
               id="open-search-grounding-btn"
               onClick={() => setIsSearchGroundingOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 whitespace-nowrap cursor-pointer"
               title="Explore Google Search Grounded Research"
             >
-              <Globe className="w-3.5 h-3.5 text-[#4285F4]" />
-              <span className="hidden sm:inline">Search Insight</span>
+              <Globe className="w-3.5 h-3.5 text-[#4285F4] shrink-0" />
+              <span>Search Insight</span>
             </button>
 
             <button
               id="cancel-session-btn"
               onClick={onCancel}
-              className="px-3 py-1.5 text-xs text-[#808080] hover:text-[#E0E0E0] hover:bg-[#161618] rounded-xl transition"
+              className="px-2.5 sm:px-3 py-1.5 text-xs text-[#808080] hover:text-[#E0E0E0] hover:bg-[#161618] rounded-xl transition shrink-0 whitespace-nowrap cursor-pointer"
             >
               Discard
             </button>
@@ -464,17 +464,17 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               id="complete-session-btn"
               onClick={handleCompleteSession}
               disabled={isFinishingSession || userMessagesCount === 0}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 shrink-0 whitespace-nowrap cursor-pointer"
             >
               {isFinishingSession ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Saving...
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Save & Summarize
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Save & Summarize</span>
                 </>
               )}
             </button>

@@ -14,14 +14,20 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
+      match /entries/{entryId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isOwner(userId) && resource.data.userId == request.auth.uid;
+      }
+
       match /{allSubcollections=**} {
         allow read, write: if isOwner(userId);
       }
     }
 
-    // Entry collection with strict owner-only access
+    // Entry collection with strict owner-only access and enforced where('userId', '==', auth.uid) queries
     match /entries/{entryId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, list: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
