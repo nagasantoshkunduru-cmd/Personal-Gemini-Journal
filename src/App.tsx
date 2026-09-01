@@ -14,6 +14,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAuthProfile | null>(null);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [activeView, setActiveView] = useState<'journal' | 'analytics'>('journal');
+  const [history, setHistory] = useState<('journal' | 'analytics')[]>(['journal']);
   const [isChatting, setIsChatting] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
@@ -58,6 +59,39 @@ export default function App() {
     };
   }, [currentUser?.uid]);
 
+  const handleSetActiveView = (view: 'journal' | 'analytics') => {
+    if (view !== activeView) {
+      setHistory((prev) => [...prev, view]);
+    }
+    if (isChatting) {
+      setIsChatting(false);
+    }
+    setActiveView(view);
+  };
+
+  const handleGoBack = () => {
+    if (selectedEntry) {
+      setSelectedEntry(null);
+      return;
+    }
+    if (isChatting) {
+      setIsChatting(false);
+      return;
+    }
+    if (history.length > 1) {
+      const updatedHistory = [...history];
+      updatedHistory.pop(); // remove current
+      const prevView = updatedHistory[updatedHistory.length - 1] || 'journal';
+      setHistory(updatedHistory);
+      setActiveView(prevView);
+    } else if (activeView === 'analytics') {
+      setActiveView('journal');
+      setHistory(['journal']);
+    } else {
+      setActiveView('journal');
+    }
+  };
+
   const handleStartNewSession = () => {
     if (!currentUser) {
       setIsAuthModalOpen(true);
@@ -84,19 +118,23 @@ export default function App() {
   };
 
   const handleSelectTagFromAnalytics = (_tag: string) => {
-    setActiveView('journal');
+    handleSetActiveView('journal');
   };
+
+  const isDashboardHome = activeView === 'journal' && !isChatting && selectedEntry === null;
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-[#E0E0E0] flex flex-col font-sans transition-colors duration-200 selection:bg-[#4285F4]/30 selection:text-white">
-      {/* Top Application Bar */}
+      {/* Top Application Bar with Dynamic Top-Left Back Button */}
       <Navbar
         user={currentUser}
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={handleSetActiveView}
         onOpenNewSession={handleStartNewSession}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenSecurityInspector={() => setIsSecurityModalOpen(true)}
+        onGoBack={handleGoBack}
+        canGoBack={!isDashboardHome}
       />
 
       {/* Main Content Area */}

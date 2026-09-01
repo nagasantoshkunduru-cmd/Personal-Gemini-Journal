@@ -41,6 +41,7 @@ import type {
 } from '../types';
 import { sanitizeText, getSentimentColor } from '../lib/sanitize';
 import { saveJournalEntry } from '../lib/firebase';
+import { playPcm24kAudio, stopGlobalAudio } from '../lib/audioUtils';
 import { VoiceStudioModal } from './VoiceStudioModal';
 import { SearchGroundingModal } from './SearchGroundingModal';
 
@@ -159,7 +160,6 @@ export function JournalChat({
 
   // Audio Playback
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
-  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Direct Recording State
   const [isDirectRecording, setIsDirectRecording] = useState(false);
@@ -167,6 +167,13 @@ export function JournalChat({
   const audioChunksRef = useRef<Blob[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Stop audio playback on unmount
+  useEffect(() => {
+    return () => {
+      stopGlobalAudio();
+    };
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -253,11 +260,11 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
     }
   };
 
-  // Play spoken TTS audio of model response
+  // Play spoken TTS audio of model response using reliable Web Audio API
   const handlePlayVoice = async (messageId: string, text: string) => {
     try {
-      if (playingMessageId === messageId && audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
+      if (playingMessageId === messageId) {
+        stopGlobalAudio();
         setPlayingMessageId(null);
         return;
       }
@@ -274,17 +281,9 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
       const { audio } = await res.json();
       if (!audio) throw new Error('No audio returned');
 
-      const audioUrl = `data:audio/wav;base64,${audio}`;
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.src = audioUrl;
-        audioPlayerRef.current.play();
-        audioPlayerRef.current.onended = () => setPlayingMessageId(null);
-      } else {
-        const player = new Audio(audioUrl);
-        audioPlayerRef.current = player;
-        player.play();
-        player.onended = () => setPlayingMessageId(null);
-      }
+      playPcm24kAudio(audio, () => {
+        setPlayingMessageId((current) => (current === messageId ? null : current));
+      });
     } catch (err) {
       console.error('TTS playback error:', err);
       setPlayingMessageId(null);
