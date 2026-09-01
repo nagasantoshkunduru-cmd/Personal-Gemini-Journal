@@ -14,7 +14,8 @@ import {
   ArrowLeft,
   Menu,
   X,
-  Shield
+  Shield,
+  Check
 } from 'lucide-react';
 import type { UserAuthProfile } from '../types';
 import { signOut, getEmailNameFallback } from '../lib/firebase';
@@ -57,6 +58,18 @@ export function Navbar({
   const userDisplayName = user ? (user.displayName || getEmailNameFallback(user.email)) : '';
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : 'U';
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#user-profile-menu-btn') && !target.closest('#mobile-hamburger-btn')) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   // Close mobile menu on escape key or resize
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,34 +82,33 @@ export function Navbar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#1E1E20]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
           {/* Left: Dynamic Back Button & Brand Identity / Dynamic Session Title Input */}
-          <div className={`flex items-center space-x-2 sm:space-x-3 ${isChatting ? 'min-w-0 flex-1 max-w-[220px] xs:max-w-[280px] sm:max-w-sm md:max-w-md' : 'shrink-0'}`}>
-            {/* Top Left Back Button with Left Arrow (Visible when navigating away from Home/Dashboard) */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            {/* Top Left Back Button (Visible when navigating away from Home/Dashboard) */}
             {canGoBack && onGoBack && (
               <button
                 id="nav-top-left-back-btn"
                 onClick={onGoBack}
                 aria-label="Go back tab"
                 title="Go back to previous tab / view"
-                className="group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#161618] hover:bg-[#202024] text-[#C0C0C0] hover:text-white border border-[#2A2A2D] hover:border-[#4285F4]/60 transition-all duration-150 shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="group flex items-center gap-1 sm:gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#161618] hover:bg-[#202024] text-[#C0C0C0] hover:text-white border border-[#2A2A2D] hover:border-[#4285F4]/60 transition-all duration-150 shadow-xs cursor-pointer active:scale-95 shrink-0"
               >
                 <ArrowLeft className="w-4 h-4 text-[#4285F4] transition-transform group-hover:-translate-x-0.5" />
-                <span className="text-xs font-semibold tracking-tight hidden xs:inline">Back</span>
+                <span className="text-xs font-semibold tracking-tight hidden sm:inline">Back</span>
               </button>
             )}
 
             {/* Dynamic Session Title Input when in active reflection session */}
             {isChatting ? (
-              <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex flex-col min-w-0 flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
                   <input
                     id="navbar-session-title-input"
                     type="text"
@@ -110,6 +122,15 @@ export function Navbar({
                     <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse shrink-0" />
                     <span className="truncate">Active Session</span>
                   </span>
+                </div>
+                {/* Auto-save Status Indicator in Header */}
+                <div
+                  id="navbar-autosave-indicator"
+                  className="hidden md:flex items-center gap-1.5 text-[11px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2.5 py-1 rounded-lg shrink-0 shadow-xs"
+                  title="Autosaved locally in real-time"
+                >
+                  <Check className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
+                  <span className="font-mono text-[10px] sm:text-xs">Auto-saved</span>
                 </div>
               </div>
             ) : (
@@ -129,54 +150,69 @@ export function Navbar({
             )}
           </div>
 
-          {/* Desktop & Tablet Center Navigation (Visible on md+) */}
-          <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
-            {/* View Toggles */}
-            <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium shrink-0">
+          {/* Desktop & Tablet Center Navigation (Visible on md+ only when NOT chatting to prevent clutter) */}
+          {!isChatting && (
+            <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
+              {/* View Toggles */}
+              <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium shrink-0">
+                <button
+                  id="nav-journal-view-btn"
+                  onClick={() => setActiveView('journal')}
+                  className={`px-2.5 lg:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                    activeView === 'journal'
+                      ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
+                      : 'text-[#808080] hover:text-[#E0E0E0]'
+                  }`}
+                >
+                  Entries
+                </button>
+                <button
+                  id="nav-analytics-view-btn"
+                  onClick={() => setActiveView('analytics')}
+                  className={`px-2.5 lg:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition whitespace-nowrap ${
+                    activeView === 'analytics'
+                      ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
+                      : 'text-[#808080] hover:text-[#E0E0E0]'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 text-[#9B72F3] shrink-0" />
+                  <span>
+                    <span className="hidden xl:inline">Intelligence </span>Insights
+                  </span>
+                </button>
+              </div>
+
+              {/* Security Verification Trigger */}
               <button
-                id="nav-journal-view-btn"
-                onClick={() => setActiveView('journal')}
-                className={`px-2.5 lg:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
-                  activeView === 'journal'
-                    ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
-                    : 'text-[#808080] hover:text-[#E0E0E0]'
-                }`}
+                id="security-inspector-badge-btn"
+                onClick={onOpenSecurityInspector}
+                title="Click to view full Security Architecture and Threat Model"
+                className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
               >
-                Entries
-              </button>
-              <button
-                id="nav-analytics-view-btn"
-                onClick={() => setActiveView('analytics')}
-                className={`px-2.5 lg:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition whitespace-nowrap ${
-                  activeView === 'analytics'
-                    ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
-                    : 'text-[#808080] hover:text-[#E0E0E0]'
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-[#9B72F3] shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] shrink-0" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
                 <span>
-                  <span className="hidden xl:inline">Intelligence </span>Insights
+                  <span className="hidden xl:inline">Vault: </span>Protected
                 </span>
               </button>
             </div>
-
-            {/* Security Verification Trigger */}
-            <button
-              id="security-inspector-badge-btn"
-              onClick={onOpenSecurityInspector}
-              title="Click to view full Security Architecture and Threat Model"
-              className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] shrink-0" />
-              <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-              <span>
-                <span className="hidden xl:inline">Vault: </span>Protected
-              </span>
-            </button>
-          </div>
+          )}
 
           {/* Desktop & Tablet Right Actions (Visible on md+) */}
           <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
+            {/* If chatting, show compact Vault Protected badge */}
+            {isChatting && (
+              <button
+                id="security-inspector-badge-btn"
+                onClick={onOpenSecurityInspector}
+                title="Click to view full Security Architecture and Threat Model"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
+                <span>Vault: Protected</span>
+              </button>
+            )}
+
             {/* Dark / Light Mode Toggle Button */}
             <button
               id="nav-theme-toggle-btn"
@@ -337,7 +373,18 @@ export function Navbar({
           </div>
 
           {/* Mobile Right Controls: Fast Action + Hamburger Button (< md) */}
-          <div className="flex md:hidden items-center space-x-2 shrink-0">
+          <div className="flex md:hidden items-center space-x-1.5 sm:space-x-2 shrink-0">
+            {isChatting && (
+              <div
+                id="mobile-navbar-autosave-indicator"
+                className="flex items-center gap-1 text-[10px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-1 rounded-lg shrink-0"
+                title="Autosaved in real-time"
+              >
+                <Check className="w-3 h-3 text-[#4ADE80] shrink-0" />
+                <span className="hidden xs:inline font-mono">Saved</span>
+              </div>
+            )}
+
             {/* Reflect & Chat Action on Mobile (hidden when already chatting) */}
             {!isChatting && (
               <button
@@ -357,7 +404,7 @@ export function Navbar({
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMobileMenuOpen}
-              className="p-2 min-w-[44px] min-h-[44px] rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#E0E0E0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs active:scale-95"
+              className="p-2 min-w-[40px] min-h-[40px] rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#E0E0E0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs active:scale-95"
             >
               {isMobileMenuOpen ? (
                 <X className="w-5 h-5 text-white" />

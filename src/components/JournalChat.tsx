@@ -532,7 +532,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
   const userMessagesCount = messages.filter((m) => m.role === 'user').length;
 
   return (
-    <div className="max-w-4xl mx-auto py-1 sm:py-2 px-2 sm:px-4 relative flex-1 flex flex-col min-h-0 h-full w-full overflow-hidden">
+    <div className="max-w-4xl mx-auto py-2 sm:py-4 px-3 sm:px-6 relative flex-1 flex flex-col min-h-0 h-full w-full overflow-hidden">
       {/* Discard Draft Confirmation Modal */}
       {showDiscardConfirm && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
