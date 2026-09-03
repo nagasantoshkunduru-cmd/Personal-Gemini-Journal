@@ -50,7 +50,6 @@ function safeSetStorage(key: string, value: Theme): void {
 
 /**
  * Synchronously mutates DOM attributes, class lists, and colorScheme.
- * Includes idempotent bail-out to prevent layout thrashing and mutation loops.
  */
 export function applyThemeToDOM(theme: Theme): void {
   if (typeof document === 'undefined') return;
@@ -58,23 +57,11 @@ export function applyThemeToDOM(theme: Theme): void {
   const root = document.documentElement;
   const body = document.body;
 
-  const currentTheme = root.getAttribute('data-theme');
-  const isOppositeOnRoot = root.classList.contains(theme === 'dark' ? 'light' : 'dark');
-  const hasClassOnRoot = root.classList.contains(theme);
-  const hasCorrectBody = !body || (body.getAttribute('data-theme') === theme && body.classList.contains(theme));
-
-  // If already synchronously applied, bail out to avoid layout recalculations
-  if (currentTheme === theme && hasClassOnRoot && !isOppositeOnRoot && hasCorrectBody && root.style.colorScheme === theme) {
-    return;
-  }
-
-  // Synchronously update attributes on html root
   root.setAttribute('data-theme', theme);
   root.style.colorScheme = theme;
   root.classList.remove('dark', 'light');
   root.classList.add(theme);
 
-  // Synchronously update attributes on body
   if (body) {
     body.setAttribute('data-theme', theme);
     body.classList.remove('dark', 'light');

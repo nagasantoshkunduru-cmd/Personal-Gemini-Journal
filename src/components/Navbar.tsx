@@ -219,7 +219,8 @@ export function Navbar({
 
             {/* Dark / Light Mode Toggle Button */}
             <button
-              id="nav-theme-toggle-btn"
+              id="theme-toggle-btn"
+              data-testid="theme-toggle-btn"
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -316,6 +317,7 @@ export function Navbar({
                     )}
 
                     <button
+                      id="dropdown-theme-toggle-btn"
                       onClick={() => {
                         toggleTheme();
                       }}

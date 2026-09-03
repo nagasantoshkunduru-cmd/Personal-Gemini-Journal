@@ -233,7 +233,7 @@ export default function App() {
     <div
       className={`${
         isChatting ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'
-      } bg-[#0A0A0B] text-[#E0E0E0] flex flex-col font-sans transition-colors duration-200 selection:bg-[#4285F4]/30 selection:text-white`}
+      } bg-[#0A0A0B] text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white`}
     >
       {/* Top Application Bar with Dynamic Top-Left Back Button & Dynamic Session Title */}
       <Navbar

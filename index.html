@@ -12,6 +12,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style id="theme-preload-style">
+      html, body {
+        background-color: #0A0A0B;
+        color: #E0E0E0;
+        margin: 0;
+        padding: 0;
+      }
+      html[data-theme="light"],
+      html[data-theme="light"] body,
+      html.light,
+      html.light body {
+        background-color: #F8F9FA !important;
+        color: #1F2937 !important;
+      }
+    </style>
     <script>
       (function() {
         try {
@@ -29,7 +44,17 @@
       })();
     </script>
   </head>
-  <body class="bg-[#0A0A0B] text-[#E0E0E0] antialiased selection:bg-[#4285F4]/30 selection:text-white min-h-screen">
+  <body class="antialiased selection:bg-[#4285F4]/30 selection:text-white min-h-screen">
+    <script>
+      (function() {
+        try {
+          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+          document.body.setAttribute('data-theme', theme);
+          document.body.classList.remove('dark', 'light');
+          document.body.classList.add(theme);
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
