@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -15,11 +15,15 @@ const THEME_STORAGE_KEY = 'gemini_journal_theme';
 /**
  * Safe local storage reader that catches browser DOMExceptions
  * in sandboxed iframes, partitioned storage, or private browsing modes.
+ * Enforces strict 'dark' | 'light' validation.
  */
-function safeGetStorage(key: string): string | null {
+function safeGetStorage(key: string): Theme | null {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return localStorage.getItem(key);
+      const val = localStorage.getItem(key);
+      if (val === 'dark' || val === 'light') {
+        return val;
+      }
     }
   } catch (e) {
     console.warn('[Theme] LocalStorage read not permitted by browser sandbox:', e);
@@ -30,10 +34,14 @@ function safeGetStorage(key: string): string | null {
 /**
  * Safe local storage writer that catches browser quota or sandbox exceptions.
  */
-function safeSetStorage(key: string, value: string): void {
+function safeSetStorage(key: string, value: Theme): void {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(key, value);
+      // Only set if changed to avoid unnecessary storage emissions
+      const current = localStorage.getItem(key);
+      if (current !== value) {
+        localStorage.setItem(key, value);
+      }
     }
   } catch (e) {
     console.warn('[Theme] LocalStorage write not permitted by browser sandbox:', e);
@@ -41,59 +49,76 @@ function safeSetStorage(key: string, value: string): void {
 }
 
 /**
- * Synchronizes DOM attributes, class lists, and colorScheme for native controls
+ * Synchronously mutates DOM attributes, class lists, and colorScheme.
+ * Includes idempotent bail-out to prevent layout thrashing and mutation loops.
  */
-function applyThemeToDOM(theme: Theme): void {
+export function applyThemeToDOM(theme: Theme): void {
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
   const body = document.body;
 
-  root.setAttribute('data-theme', theme);
-  body.setAttribute('data-theme', theme);
+  const currentTheme = root.getAttribute('data-theme');
+  const isOppositeOnRoot = root.classList.contains(theme === 'dark' ? 'light' : 'dark');
+  const hasClassOnRoot = root.classList.contains(theme);
+  const hasCorrectBody = !body || (body.getAttribute('data-theme') === theme && body.classList.contains(theme));
 
-  if (theme === 'light') {
-    root.classList.remove('dark');
-    root.classList.add('light');
-    body.classList.remove('dark');
-    body.classList.add('light');
-    root.style.colorScheme = 'light';
-  } else {
-    root.classList.remove('light');
-    root.classList.add('dark');
-    body.classList.remove('light');
-    body.classList.add('dark');
-    root.style.colorScheme = 'dark';
+  // If already synchronously applied, bail out to avoid layout recalculations
+  if (currentTheme === theme && hasClassOnRoot && !isOppositeOnRoot && hasCorrectBody && root.style.colorScheme === theme) {
+    return;
+  }
+
+  // Synchronously update attributes on html root
+  root.setAttribute('data-theme', theme);
+  root.style.colorScheme = theme;
+  root.classList.remove('dark', 'light');
+  root.classList.add(theme);
+
+  // Synchronously update attributes on body
+  if (body) {
+    body.setAttribute('data-theme', theme);
+    body.classList.remove('dark', 'light');
+    body.classList.add(theme);
   }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     // 1. Check saved local storage preference safely
-    const saved = safeGetStorage(THEME_STORAGE_KEY) as Theme | null;
-    if (saved === 'dark' || saved === 'light') {
+    const saved = safeGetStorage(THEME_STORAGE_KEY);
+    if (saved) {
+      // Immediately apply to DOM during initial evaluation
+      applyThemeToDOM(saved);
       return saved;
     }
     // 2. Check system preference
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      applyThemeToDOM('light');
       return 'light';
     }
+    applyThemeToDOM('dark');
     return 'dark';
   });
 
-  // Apply DOM classes whenever theme changes and persist safely
-  useEffect(() => {
+  // Guarantee synchronous synchronization before paint
+  useLayoutEffect(() => {
     applyThemeToDOM(theme);
     safeSetStorage(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  // Listen for storage events from other browser tabs or windows
+  // Listen for storage events from other browser tabs or windows without loops
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === THEME_STORAGE_KEY && (e.newValue === 'light' || e.newValue === 'dark')) {
-        setThemeState(e.newValue);
+        const nextTheme = e.newValue as Theme;
+        setThemeState((prev) => {
+          // If state is already matching, bail out immediately to prevent re-renders
+          if (prev === nextTheme) return prev;
+          applyThemeToDOM(nextTheme);
+          return nextTheme;
+        });
       }
     };
 
@@ -101,12 +126,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
+  // Synchronous toggle handler: Mutates DOM instantly during click event before paint
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const next: Theme = prev === 'dark' ? 'light' : 'dark';
+      // Synchronous DOM mutation for zero-flicker instant transition
+      applyThemeToDOM(next);
+      safeSetStorage(THEME_STORAGE_KEY, next);
+      return next;
+    });
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  // Synchronous set handler: Mutates DOM instantly
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState((prev) => {
+      if (prev === newTheme) return prev;
+      applyThemeToDOM(newTheme);
+      safeSetStorage(THEME_STORAGE_KEY, newTheme);
+      return newTheme;
+    });
   }, []);
 
   return (
@@ -123,3 +161,4 @@ export function useTheme(): ThemeContextType {
   }
   return context;
 }
+
