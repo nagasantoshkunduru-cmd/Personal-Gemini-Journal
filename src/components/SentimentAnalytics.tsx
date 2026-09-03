@@ -101,8 +101,9 @@ export function SentimentAnalytics({
           Complete a few conversational journaling sessions to unlock psychological sentiment breakdowns, keyword tag patterns, and emotional energy metrics.
         </p>
         <button
+          id="start-journaling-analytics-btn"
           onClick={onNewSession}
-          className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold rounded-xl transition shadow-sm"
+          className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 text-xs font-bold rounded-xl transition shadow-sm active:scale-95 cursor-pointer"
         >
           Start Journaling
         </button>

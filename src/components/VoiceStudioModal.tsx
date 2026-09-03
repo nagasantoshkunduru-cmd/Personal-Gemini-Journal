@@ -400,14 +400,15 @@ export function VoiceStudioModal({
             </button>
 
             <button
+              id="voice-studio-done-btn"
               onClick={() => {
                 stopVoiceSession();
                 onClose();
               }}
-              className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+              className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Done Speaking</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900" />
+              <span className="text-neutral-900">Done Speaking</span>
             </button>
           </div>
         </div>

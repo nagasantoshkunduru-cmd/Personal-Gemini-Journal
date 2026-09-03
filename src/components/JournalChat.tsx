@@ -663,19 +663,19 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               id="complete-session-btn"
               onClick={handleCompleteSession}
               disabled={isFinishingSession || userMessagesCount === 0}
-              className="p-1.5 sm:px-3 sm:py-1.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 shrink-0 cursor-pointer flex items-center gap-1.5"
+              className="btn-primary-cta p-1.5 sm:px-3 sm:py-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 shrink-0 cursor-pointer flex items-center gap-1.5 active:scale-95"
               title="Save & Summarize Reflection"
               aria-label="Save and summarize reflection"
             >
               {isFinishingSession ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                  <span className="hidden sm:inline">Saving...</span>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-neutral-900" />
+                  <span className="hidden sm:inline text-neutral-900">Saving...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline">Save</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-neutral-900" />
+                  <span className="hidden sm:inline text-neutral-900">Save</span>
                 </>
               )}
             </button>
@@ -983,10 +983,10 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               id="journal-send-btn"
               type="submit"
               disabled={!inputText.trim() || isAiReplying || isFinishingSession}
-              className="p-2 sm:p-2.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl shadow-sm transition disabled:opacity-40 shrink-0 flex items-center justify-center cursor-pointer"
+              className="btn-primary-cta p-2 sm:p-2.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl shadow-sm transition disabled:opacity-40 shrink-0 flex items-center justify-center cursor-pointer active:scale-95"
               title="Send Reflection (Enter)"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 text-neutral-900" />
             </button>
           </form>
         </div>

@@ -54,11 +54,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
             <div className="flex justify-center gap-3 pt-2">
               <button
+                id="error-reload-app-btn"
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm"
+                className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
               >
-                <RefreshCw className="w-4 h-4" />
-                Reload Application
+                <RefreshCw className="w-4 h-4 text-neutral-900" />
+                <span className="text-neutral-900">Reload Application</span>
               </button>
             </div>
           </div>

@@ -237,10 +237,10 @@ export function Navbar({
               <button
                 id="new-session-nav-btn"
                 onClick={onOpenNewSession}
-                className="flex items-center gap-1.5 py-2 px-3 lg:px-3.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer shrink-0 whitespace-nowrap"
+                className="btn-primary-cta flex items-center gap-1.5 py-2 px-3 lg:px-3.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
               >
-                <PlusCircle className="w-4 h-4 shrink-0" />
-                <span>Reflect & Chat</span>
+                <PlusCircle className="w-4 h-4 shrink-0 text-neutral-900" />
+                <span className="text-neutral-900">Reflect & Chat</span>
               </button>
             )}
 
@@ -397,10 +397,10 @@ export function Navbar({
                 id="mobile-quick-reflect-btn"
                 onClick={onOpenNewSession}
                 aria-label="Start reflection and chat session"
-                className="flex items-center gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer shrink-0"
+                className="btn-primary-cta flex items-center gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer shrink-0"
               >
-                <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap">Reflect</span>
+                <PlusCircle className="w-3.5 h-3.5 shrink-0 text-neutral-900" />
+                <span className="whitespace-nowrap text-neutral-900">Reflect</span>
               </button>
             )}
 
@@ -547,13 +547,13 @@ export function Navbar({
                 setIsMobileMenuOpen(false);
                 onOpenNewSession();
               }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-[#4285F4]/10 hover:bg-[#4285F4]/20 text-[#60A5FA] border border-[#4285F4]/30 transition"
+              className="btn-primary-cta w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 transition shadow-xs cursor-pointer active:scale-95"
             >
               <div className="flex items-center gap-2.5">
-                <PlusCircle className="w-4 h-4 text-[#4285F4]" />
-                <span>Start New Reflection Session</span>
+                <PlusCircle className="w-4 h-4 text-neutral-900" />
+                <span className="text-neutral-900">Start New Reflection Session</span>
               </div>
-              <span className="text-[10px] bg-[#4285F4] text-white px-2 py-0.5 rounded-md font-bold">New</span>
+              <span className="text-[10px] bg-neutral-900 text-white px-2 py-0.5 rounded-md font-bold">New</span>
             </button>
           </div>
 

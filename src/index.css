@@ -156,7 +156,52 @@ html[data-theme="light"] * {
 }
 
 /* =========================================================
-   CRITICAL EXCEPTIONS: BUTTONS & ACCENTS KEEP WHITE TEXT
+   PRIMARY INVERTED ACTION BUTTONS (HIGH-CONTRAST MONOCHROME)
+   ========================================================= */
+
+.btn-primary-cta,
+button.btn-primary-cta,
+[data-theme="dark"] .btn-primary-cta,
+[data-theme="light"] .btn-primary-cta,
+html[data-theme="dark"] .btn-primary-cta,
+html[data-theme="light"] .btn-primary-cta {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border-color: #D1D5DB !important;
+}
+
+.btn-primary-cta:hover,
+button.btn-primary-cta:hover,
+[data-theme="dark"] .btn-primary-cta:hover,
+[data-theme="light"] .btn-primary-cta:hover,
+html[data-theme="dark"] .btn-primary-cta:hover,
+html[data-theme="light"] .btn-primary-cta:hover {
+  background-color: #F3F4F6 !important;
+  border-color: #9CA3AF !important;
+}
+
+.btn-primary-cta:active,
+button.btn-primary-cta:active {
+  transform: scale(0.97);
+}
+
+.btn-primary-cta:disabled,
+button.btn-primary-cta:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-primary-cta *,
+button.btn-primary-cta *,
+[data-theme="dark"] .btn-primary-cta *,
+[data-theme="light"] .btn-primary-cta *,
+html[data-theme="dark"] .btn-primary-cta *,
+html[data-theme="light"] .btn-primary-cta * {
+  color: #111827 !important;
+}
+
+/* =========================================================
+   CRITICAL EXCEPTIONS: ACCENTS KEEP WHITE TEXT
    ========================================================= */
 
 .bg-\[\#4285F4\],

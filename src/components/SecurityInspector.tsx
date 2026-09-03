@@ -276,8 +276,9 @@ service cloud.firestore {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-[#1E1E20] bg-[#0A0A0B] flex justify-end">
           <button
+            id="close-security-audit-btn"
             onClick={onClose}
-            className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold transition"
+            className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
           >
             Close Security Audit
           </button>

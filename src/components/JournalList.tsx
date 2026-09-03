@@ -177,10 +177,10 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
             <button
               id="new-entry-list-btn"
               onClick={onNewSession}
-              className="flex items-center gap-1.5 py-2.5 px-3.5 sm:px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition shrink-0 whitespace-nowrap cursor-pointer"
+              className="btn-primary-cta flex items-center gap-1.5 py-2.5 px-3.5 sm:px-4 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition shrink-0 whitespace-nowrap cursor-pointer active:scale-95"
             >
-              <PlusCircle className="w-4 h-4 shrink-0" />
-              <span>New Entry</span>
+              <PlusCircle className="w-4 h-4 shrink-0 text-neutral-900" />
+              <span className="text-neutral-900">New Entry</span>
             </button>
           </div>
         </div>
@@ -286,10 +286,10 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
             <button
               id="resume-draft-list-btn"
               onClick={onNewSession}
-              className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+              className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
-              <span>Resume Draft</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span className="text-neutral-900">Resume Draft</span>
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-900" />
             </button>
           </div>
         </div>
@@ -325,9 +325,10 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
           {entries.length === 0 && (
             <button
               onClick={onNewSession}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition"
+              className="btn-primary-cta inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition active:scale-95"
             >
-              <PlusCircle className="w-4 h-4" /> Start Your First Reflection
+              <PlusCircle className="w-4 h-4 text-neutral-900" />
+              <span className="text-neutral-900">Start Your First Reflection</span>
             </button>
           )}
         </div>
@@ -382,10 +383,10 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
                       <button
                         onClick={(e) => handleSaveCardTitle(e, entry.id)}
                         disabled={isSavingCardTitle || !editingCardTitle.trim()}
-                        className="p-1.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-lg transition disabled:opacity-50 shrink-0 cursor-pointer"
+                        className="btn-primary-cta p-1.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-lg transition disabled:opacity-50 shrink-0 cursor-pointer active:scale-95"
                         title="Save title"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="w-3.5 h-3.5 text-neutral-900" />
                       </button>
                       <button
                         onClick={handleCancelCardTitle}

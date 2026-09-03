@@ -319,9 +319,9 @@ export function AuthModal({
                   id="auth-submit-btn"
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="btn-primary-cta w-full py-2.5 px-4 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
-                  {loading ? 'Authenticating...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+                  <span className="text-neutral-900 font-bold">{loading ? 'Authenticating...' : mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
                 </button>
               </form>
 
@@ -452,14 +452,14 @@ export function AuthModal({
                     id="onboarding-save-name-btn"
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 px-4 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    className="btn-primary-cta w-full py-2.5 px-4 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                   >
                     {loading ? (
-                      'Saving Profile...'
+                      <span className="text-neutral-900">Saving Profile...</span>
                     ) : (
                       <>
-                        <Check className="w-4 h-4" />
-                        <span>Save & Continue</span>
+                        <Check className="w-4 h-4 text-neutral-900" />
+                        <span className="text-neutral-900">Save & Continue</span>
                       </>
                     )}
                   </button>

@@ -297,11 +297,11 @@ export default function App() {
           <button
             id="floating-new-entry-btn"
             onClick={handleStartNewSession}
-            className="flex items-center gap-2.5 px-4 py-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-full shadow-2xl shadow-[#4285F4]/30 border border-[#4285F4]/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+            className="btn-primary-cta flex items-center gap-2.5 px-4 py-3 bg-white hover:bg-neutral-100 text-neutral-900 rounded-full shadow-2xl border border-neutral-300 hover:border-neutral-400 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
             title="Start New Journal Entry"
           >
-            <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200 shrink-0" />
-            <span className="text-xs sm:text-sm font-bold tracking-wide">New Entry</span>
+            <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200 shrink-0 text-neutral-900" />
+            <span className="text-xs sm:text-sm font-bold tracking-wide text-neutral-900">New Entry</span>
           </button>
         </div>
       )}

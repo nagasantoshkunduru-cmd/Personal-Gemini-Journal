@@ -246,10 +246,10 @@ ${entry.rawTranscript}
                   id="save-session-title-btn"
                   onClick={handleSaveTitle}
                   disabled={isSavingTitle || !editedTitle.trim()}
-                  className="p-2 bg-[#4285F4] hover:bg-[#3367D6] disabled:opacity-50 text-white rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
+                  className="btn-primary-cta p-2 bg-white hover:bg-neutral-100 disabled:opacity-50 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer shadow-xs active:scale-95"
                   title="Save title (Enter)"
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4 text-neutral-900" />
                 </button>
                 <button
                   id="cancel-session-title-btn"
@@ -449,8 +449,9 @@ ${entry.rawTranscript}
             <span>Vault Protected: users/{entry.userId.slice(0, 6)}...</span>
           </div>
           <button
+            id="entry-detail-done-btn"
             onClick={onClose}
-            className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold transition"
+            className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
           >
             Done
           </button>

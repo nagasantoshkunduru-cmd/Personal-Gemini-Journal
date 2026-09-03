@@ -128,12 +128,13 @@ export function SearchGroundingModal({
               />
             </div>
             <button
+              id="search-grounding-submit-btn"
               type="submit"
               disabled={!query.trim() || isLoading}
-              className="px-4 py-2.5 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+              className="btn-primary-cta px-4 py-2.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-40 flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              <span>Search</span>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-neutral-900" /> : <Search className="w-4 h-4 text-neutral-900" />}
+              <span className="text-neutral-900">Search</span>
             </button>
           </form>
 
@@ -231,11 +232,12 @@ export function SearchGroundingModal({
           </button>
           {result && (
             <button
+              id="add-grounding-to-journal-btn"
               onClick={handleApplyToJournal}
-              className="px-4 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+              className="btn-primary-cta px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add to Journal Thread</span>
+              <Plus className="w-3.5 h-3.5 text-neutral-900" />
+              <span className="text-neutral-900">Add to Journal Thread</span>
             </button>
           )}
         </div>
