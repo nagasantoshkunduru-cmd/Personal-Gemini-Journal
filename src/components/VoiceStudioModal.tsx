@@ -284,7 +284,7 @@ export function VoiceStudioModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div id="voice-studio-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">

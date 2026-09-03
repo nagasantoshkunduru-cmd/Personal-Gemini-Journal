@@ -79,7 +79,7 @@ export function SearchGroundingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div id="search-grounding-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">

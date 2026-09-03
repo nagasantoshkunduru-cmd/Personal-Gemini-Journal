@@ -85,9 +85,9 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#1E1E20]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-3 w-full">
           {/* Left: Dynamic Back Button & Brand Identity / Dynamic Session Title Input */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
             {/* Top Left Back Button (Visible when navigating away from Home/Dashboard) */}
             {canGoBack && onGoBack && (
               <button
@@ -104,33 +104,24 @@ export function Navbar({
 
             {/* Dynamic Session Title Input when in active reflection session */}
             {isChatting ? (
-              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
-                  <Sparkles className="w-4 h-4" />
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
+                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div className="flex flex-col min-w-0 flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <input
                     id="navbar-session-title-input"
                     type="text"
                     value={sessionTitle}
                     onChange={(e) => onSessionTitleChange?.(e.target.value)}
                     placeholder="Session Title (or auto-name)"
-                    className="font-bold text-xs sm:text-sm md:text-base text-white bg-transparent border-b border-transparent hover:border-[#2A2A2D] focus:border-[#4285F4] focus:outline-hidden px-1 py-0.5 rounded transition w-full truncate placeholder-[#606060]"
+                    className="font-bold text-xs sm:text-sm md:text-base text-white bg-transparent border-b border-transparent hover:border-[#2A2A2D] focus:border-[#4285F4] focus:outline-hidden px-1.5 py-1 rounded transition w-full min-w-[70px] truncate placeholder-[#606060]"
                     title="Enter reflection session title"
                   />
-                  <span className="text-[10px] uppercase tracking-widest text-[#4ADE80] font-bold flex items-center gap-1 px-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse shrink-0" />
-                    <span className="truncate">Active Session</span>
+                  <span className="hidden xl:flex items-center gap-1 text-[10px] uppercase tracking-widest text-[#4ADE80] font-bold px-2 py-0.5 rounded-md bg-[#1A3020] border border-[#225030] shrink-0 whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />
+                    <span>Active</span>
                   </span>
-                </div>
-                {/* Auto-save Status Indicator in Header */}
-                <div
-                  id="navbar-autosave-indicator"
-                  className="hidden md:flex items-center gap-1.5 text-[11px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2.5 py-1 rounded-lg shrink-0 shadow-xs"
-                  title="Autosaved locally in real-time"
-                >
-                  <Check className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-                  <span className="font-mono text-[10px] sm:text-xs">Auto-saved</span>
                 </div>
               </div>
             ) : (
@@ -199,7 +190,19 @@ export function Navbar({
           )}
 
           {/* Desktop & Tablet Right Actions (Visible on md+) */}
-          <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5 lg:gap-2.5 shrink-0">
+            {/* If chatting, show Auto-saved status indicator in header */}
+            {isChatting && (
+              <div
+                id="navbar-autosave-indicator"
+                className="flex items-center gap-1.5 text-[11px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2.5 py-1.5 rounded-xl shrink-0 shadow-xs whitespace-nowrap"
+                title="Autosaved locally in real-time"
+              >
+                <Check className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
+                <span className="font-mono text-xs">Auto-saved</span>
+              </div>
+            )}
+
             {/* If chatting, show compact Vault Protected badge */}
             {isChatting && (
               <button
@@ -209,7 +212,8 @@ export function Navbar({
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-                <span>Vault: Protected</span>
+                <span className="hidden lg:inline">Vault: Protected</span>
+                <span className="lg:hidden">Vault</span>
               </button>
             )}
 
@@ -372,16 +376,16 @@ export function Navbar({
             )}
           </div>
 
-          {/* Mobile Right Controls: Fast Action + Hamburger Button (< md) */}
-          <div className="flex md:hidden items-center space-x-1.5 sm:space-x-2 shrink-0">
+          {/* Mobile Right Controls: Fast Action + Quick Theme + Hamburger Button (< md) */}
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
             {isChatting && (
               <div
                 id="mobile-navbar-autosave-indicator"
-                className="flex items-center gap-1 text-[10px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-1 rounded-lg shrink-0"
+                className="flex items-center gap-1 text-[10px] font-medium text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-1 rounded-lg shrink-0 whitespace-nowrap"
                 title="Autosaved in real-time"
               >
                 <Check className="w-3 h-3 text-[#4ADE80] shrink-0" />
-                <span className="hidden xs:inline font-mono">Saved</span>
+                <span className="font-mono">Saved</span>
               </div>
             )}
 
@@ -391,12 +395,27 @@ export function Navbar({
                 id="mobile-quick-reflect-btn"
                 onClick={onOpenNewSession}
                 aria-label="Start reflection and chat session"
-                className="flex items-center gap-1.5 py-2 px-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer shrink-0"
               >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>Reflect & Chat</span>
+                <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Reflect</span>
               </button>
             )}
+
+            {/* Quick One-Tap Theme Toggle on Mobile */}
+            <button
+              id="mobile-nav-quick-theme-btn"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              className="p-2 min-w-[36px] min-h-[36px] rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#A0A0A0] hover:text-[#4285F4] transition flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#FBBF24]" />
+              ) : (
+                <Moon className="w-4 h-4 text-[#60A5FA]" />
+              )}
+            </button>
 
             {/* Mobile Hamburger Menu Toggle Button */}
             <button
@@ -404,7 +423,7 @@ export function Navbar({
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMobileMenuOpen}
-              className="p-2 min-w-[40px] min-h-[40px] rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#E0E0E0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs active:scale-95"
+              className="p-2 min-w-[36px] min-h-[36px] rounded-xl bg-[#161618] border border-[#2A2A2D] hover:bg-[#1E1E20] hover:border-[#3A3A3D] text-[#E0E0E0] hover:text-white transition flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
             >
               {isMobileMenuOpen ? (
                 <X className="w-5 h-5 text-white" />
