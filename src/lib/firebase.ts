@@ -119,6 +119,86 @@ function initFirestore() {
 
 export const db = initFirestore();
 
+// Local Guest Storage Keys
+const GUEST_PROFILE_STORAGE_KEY = 'vault_guest_profile';
+const GUEST_ENTRIES_STORAGE_KEY_PREFIX = 'vault_guest_entries_';
+
+/**
+ * Retrieve local guest profile if active
+ */
+export function getLocalGuestProfile(): UserAuthProfile | null {
+  try {
+    const raw = localStorage.getItem(GUEST_PROFILE_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as UserAuthProfile;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save or clear local guest profile
+ */
+export function setLocalGuestProfile(profile: UserAuthProfile | null): void {
+  try {
+    if (profile) {
+      localStorage.setItem(GUEST_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(GUEST_PROFILE_STORAGE_KEY);
+    }
+  } catch (e) {
+    console.warn('Unable to persist guest profile to localStorage:', e);
+  }
+}
+
+/**
+ * Clear local guest profile
+ */
+export function clearLocalGuestProfile(): void {
+  try {
+    localStorage.removeItem(GUEST_PROFILE_STORAGE_KEY);
+  } catch (e) {
+    console.warn('Unable to clear guest profile from localStorage:', e);
+  }
+}
+
+/**
+ * Check if the active session is a local guest/sandbox session
+ */
+export function isGuestSession(userId?: string | null): boolean {
+  if (!userId) return false;
+  if (userId.startsWith('guest_')) return true;
+  if (!auth.currentUser && getLocalGuestProfile()?.uid === userId) return true;
+  return false;
+}
+
+/**
+ * Read local entries for guest users
+ */
+function getLocalEntries(userId: string): JournalEntry[] {
+  try {
+    const raw = localStorage.getItem(`${GUEST_ENTRIES_STORAGE_KEY_PREFIX}${userId}`);
+    if (!raw) return [];
+    return JSON.parse(raw) as JournalEntry[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save local entries for guest users and trigger cross-component event
+ */
+function saveLocalEntries(userId: string, entries: JournalEntry[]): void {
+  try {
+    localStorage.setItem(`${GUEST_ENTRIES_STORAGE_KEY_PREFIX}${userId}`, JSON.stringify(entries));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vault_entries_changed', { detail: { userId } }));
+    }
+  } catch (e) {
+    console.warn('Unable to save local entries:', e);
+  }
+}
+
 /**
  * Extract name portion of an email address as a reliable fallback.
  */
@@ -139,10 +219,23 @@ export function formatUserProfile(user: User | null): UserAuthProfile | null {
   return {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName || (user.isAnonymous ? 'Guest' : emailFallback),
+    displayName: user.displayName || (user.isAnonymous ? 'Guest Explorer' : emailFallback),
     photoURL: user.photoURL,
     isAnonymous: user.isAnonymous,
   };
+}
+
+// Active listeners for auth changes
+const authListeners: Array<(profile: UserAuthProfile | null) => void> = [];
+
+export function notifyAuthListeners(profile: UserAuthProfile | null) {
+  authListeners.forEach((listener) => {
+    try {
+      listener(profile);
+    } catch (e) {
+      console.warn('Error notifying auth listener:', e);
+    }
+  });
 }
 
 /**
@@ -150,6 +243,19 @@ export function formatUserProfile(user: User | null): UserAuthProfile | null {
  */
 export async function updateUserDisplayName(newDisplayName: string): Promise<UserAuthProfile> {
   const currentUser = auth.currentUser;
+  const localGuest = getLocalGuestProfile();
+
+  if (!currentUser && localGuest) {
+    const trimmed = newDisplayName.trim() || 'Guest Explorer';
+    const updated: UserAuthProfile = {
+      ...localGuest,
+      displayName: trimmed,
+    };
+    setLocalGuestProfile(updated);
+    notifyAuthListeners(updated);
+    return updated;
+  }
+
   if (!currentUser) throw new Error('Authentication required: No active user.');
 
   const fallback = getEmailNameFallback(currentUser.email);
@@ -182,12 +288,36 @@ export async function updateUserDisplayName(newDisplayName: string): Promise<Use
 }
 
 /**
- * Listen to Auth State Changes
+ * Listen to Auth State Changes with support for seamless guest sessions
  */
 export function onAuthUserChanged(callback: (profile: UserAuthProfile | null) => void) {
-  return onAuthStateChanged(auth, (user) => {
-    callback(formatUserProfile(user));
+  authListeners.push(callback);
+
+  const unsubscribeFirebase = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      clearLocalGuestProfile();
+      callback(formatUserProfile(user));
+    } else {
+      const localGuest = getLocalGuestProfile();
+      if (localGuest) {
+        callback(localGuest);
+      } else {
+        callback(null);
+      }
+    }
   });
+
+  // If local guest is already stored and Firebase is unauthenticated, trigger callback
+  const existingGuest = getLocalGuestProfile();
+  if (existingGuest && !auth.currentUser) {
+    callback(existingGuest);
+  }
+
+  return () => {
+    const idx = authListeners.indexOf(callback);
+    if (idx !== -1) authListeners.splice(idx, 1);
+    unsubscribeFirebase();
+  };
 }
 
 /**
@@ -195,6 +325,7 @@ export function onAuthUserChanged(callback: (profile: UserAuthProfile | null) =>
  */
 export async function signInWithGoogle(): Promise<UserAuthProfile> {
   const result = await signInWithPopup(auth, googleProvider);
+  clearLocalGuestProfile();
   const profile = formatUserProfile(result.user);
   if (!profile) throw new Error('Failed to retrieve user profile');
   return profile;
@@ -205,6 +336,7 @@ export async function signInWithGoogle(): Promise<UserAuthProfile> {
  */
 export async function signInWithEmail(email: string, pass: string): Promise<UserAuthProfile> {
   const result = await signInWithEmailAndPassword(auth, email, pass);
+  clearLocalGuestProfile();
   const profile = formatUserProfile(result.user);
   if (!profile) throw new Error('Failed to sign in with email');
   return profile;
@@ -215,6 +347,7 @@ export async function signInWithEmail(email: string, pass: string): Promise<User
  */
 export async function signUpWithEmail(email: string, pass: string): Promise<UserAuthProfile> {
   const result = await createUserWithEmailAndPassword(auth, email, pass);
+  clearLocalGuestProfile();
   const profile = formatUserProfile(result.user);
   if (!profile) throw new Error('Failed to create user account');
   return profile;
@@ -222,11 +355,35 @@ export async function signUpWithEmail(email: string, pass: string): Promise<User
 
 /**
  * Guest / Anonymous Sign-In (Zero friction)
+ * Attempts Firebase anonymous sign-in, and gracefully falls back to local sandbox
+ * if Anonymous Authentication is restricted/disabled by Firebase admin policy (auth/admin-restricted-operation).
  */
 export async function signInAsGuest(): Promise<UserAuthProfile> {
-  const result = await signInAnonymously(auth);
-  const profile = formatUserProfile(result.user);
-  if (!profile) throw new Error('Failed to create guest session');
+  try {
+    const result = await signInAnonymously(auth);
+    const profile = formatUserProfile(result.user);
+    if (profile) {
+      clearLocalGuestProfile();
+      return profile;
+    }
+  } catch (err: any) {
+    console.info(
+      '[Firebase Auth Notice] Firebase Anonymous sign-in provider is restricted in Firebase Console (auth/admin-restricted-operation). Activating local guest sandbox mode seamlessly.',
+      err.code || err.message
+    );
+  }
+
+  // Graceful local guest profile
+  const existing = getLocalGuestProfile();
+  const profile: UserAuthProfile = existing || {
+    uid: `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    displayName: 'Guest Explorer',
+    email: null,
+    photoURL: null,
+    isAnonymous: true,
+  };
+  setLocalGuestProfile(profile);
+  notifyAuthListeners(profile);
   return profile;
 }
 
@@ -234,18 +391,25 @@ export async function signInAsGuest(): Promise<UserAuthProfile> {
  * Sign Out
  */
 export async function signOut(): Promise<void> {
-  await firebaseSignOut(auth);
+  clearLocalGuestProfile();
+  notifyAuthListeners(null);
+  try {
+    await firebaseSignOut(auth);
+  } catch (err) {
+    console.warn('Firebase signOut notice:', err);
+  }
 }
 
 /**
  * Save / Update Journal Entry to Cloud Firestore with strict User ID enforcement.
  * Ensures the document explicitly includes the current user's UID and writes to isolated user path.
+ * Seamlessly stores to local guest storage if operating in guest sandbox mode.
  */
 export async function saveJournalEntry(
   userIdOrEntry: string | (Omit<JournalEntry, 'id'> & { id?: string }),
   maybeEntry?: Omit<JournalEntry, 'id' | 'userId'> & { id?: string }
 ): Promise<string> {
-  const currentAuthUid = auth.currentUser?.uid;
+  const currentAuthUid = auth.currentUser?.uid || getLocalGuestProfile()?.uid;
   let targetUserId = currentAuthUid;
   let entryData: any;
 
@@ -276,6 +440,21 @@ export async function saveJournalEntry(
   // Strip undefined values for clean zero-crash Firestore payloads
   const cleanPayload = JSON.parse(JSON.stringify(rawEntry));
 
+  // If local guest session or no auth user, persist to local entries storage
+  if (isGuestSession(targetUserId) || !auth.currentUser) {
+    const currentList = getLocalEntries(targetUserId);
+    const existingIndex = currentList.findIndex((e) => e.id === entryId);
+    let updatedList: JournalEntry[];
+    if (existingIndex >= 0) {
+      updatedList = [...currentList];
+      updatedList[existingIndex] = cleanPayload;
+    } else {
+      updatedList = [cleanPayload, ...currentList];
+    }
+    saveLocalEntries(targetUserId, updatedList);
+    return entryId;
+  }
+
   const writePath = `users/${targetUserId}/entries/${entryId}`;
   try {
     // 1. Write to isolated user collection: /users/{userId}/entries/{entryId}
@@ -288,7 +467,23 @@ export async function saveJournalEntry(
 
     return entryId;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, writePath);
+    console.warn('[Firestore Write Notice] Fallback to local persistence:', error);
+    const currentList = getLocalEntries(targetUserId);
+    const existingIndex = currentList.findIndex((e) => e.id === entryId);
+    let updatedList: JournalEntry[];
+    if (existingIndex >= 0) {
+      updatedList = [...currentList];
+      updatedList[existingIndex] = cleanPayload;
+    } else {
+      updatedList = [cleanPayload, ...currentList];
+    }
+    saveLocalEntries(targetUserId, updatedList);
+
+    try {
+      handleFirestoreError(error, OperationType.WRITE, writePath);
+    } catch {
+      // Diagnostic logged
+    }
     return entryId;
   }
 }
@@ -301,7 +496,7 @@ export async function updateJournalEntryTitle(
   newTitle: string,
   optionalUserId?: string
 ): Promise<void> {
-  const currentAuthUid = auth.currentUser?.uid;
+  const currentAuthUid = auth.currentUser?.uid || getLocalGuestProfile()?.uid;
   const userId = optionalUserId || currentAuthUid;
 
   if (!userId) {
@@ -309,6 +504,14 @@ export async function updateJournalEntryTitle(
   }
 
   const trimmedTitle = newTitle.trim() || 'Untitled Reflection';
+
+  if (isGuestSession(userId) || !auth.currentUser) {
+    const list = getLocalEntries(userId);
+    const updated = list.map((e) => (e.id === entryId ? { ...e, title: trimmedTitle, updatedAt: Date.now() } : e));
+    saveLocalEntries(userId, updated);
+    return;
+  }
+
   const writePath = `users/${userId}/entries/${entryId}`;
   try {
     const userDocRef = doc(db, 'users', userId, 'entries', entryId);
@@ -328,11 +531,18 @@ export async function deleteJournalEntry(
   entryId: string,
   optionalUserId?: string
 ): Promise<void> {
-  const currentAuthUid = auth.currentUser?.uid;
+  const currentAuthUid = auth.currentUser?.uid || getLocalGuestProfile()?.uid;
   const userId = optionalUserId || currentAuthUid;
 
   if (!userId) {
     throw new Error('Authentication required: Current user UID is missing for deletion.');
+  }
+
+  if (isGuestSession(userId) || !auth.currentUser) {
+    const list = getLocalEntries(userId);
+    const updated = list.filter((e) => e.id !== entryId);
+    saveLocalEntries(userId, updated);
+    return;
   }
 
   const deletePath = `users/${userId}/entries/${entryId}`;
@@ -358,6 +568,41 @@ export function subscribeUserEntries(
   if (!userId) {
     onData([]);
     return () => {};
+  }
+
+  // Handle local guest subscription with live storage and event synchronization
+  if (isGuestSession(userId) || !auth.currentUser) {
+    const emitLocal = () => {
+      const entries = getLocalEntries(userId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      onData(entries);
+    };
+
+    emitLocal();
+
+    const handleCustomEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.userId === userId) {
+        emitLocal();
+      }
+    };
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === `${GUEST_ENTRIES_STORAGE_KEY_PREFIX}${userId}`) {
+        emitLocal();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('vault_entries_changed', handleCustomEvent);
+      window.addEventListener('storage', handleStorageEvent);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('vault_entries_changed', handleCustomEvent);
+        window.removeEventListener('storage', handleStorageEvent);
+      }
+    };
   }
 
   const path = `users/${userId}/entries`;
@@ -392,6 +637,10 @@ export function subscribeUserEntries(
     },
     (error) => {
       console.warn('[Firestore User Subscription Notice]', error.message);
+      const localEntries = getLocalEntries(userId);
+      if (localEntries.length > 0) {
+        onData(localEntries);
+      }
       try {
         handleFirestoreError(error, OperationType.LIST, path);
       } catch (err) {
@@ -406,6 +655,9 @@ export function subscribeUserEntries(
  */
 export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> {
   if (!userId) return [];
+  if (isGuestSession(userId) || !auth.currentUser) {
+    return getLocalEntries(userId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
   const path = `users/${userId}/entries`;
   try {
     const entriesRef = collection(db, 'users', userId, 'entries');
@@ -416,7 +668,7 @@ export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> 
     );
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
-      return [];
+      return getLocalEntries(userId);
     }
     const items: JournalEntry[] = [];
     snapshot.forEach((docSnap) => {
@@ -427,6 +679,8 @@ export async function fetchUserEntries(userId: string): Promise<JournalEntry[]> 
     });
     return items;
   } catch (err) {
+    const local = getLocalEntries(userId);
+    if (local.length > 0) return local;
     handleFirestoreError(err, OperationType.LIST, path);
     return [];
   }

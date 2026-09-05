@@ -83,7 +83,7 @@ export function Navbar({
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-md border-b border-[#1E1E20]">
+    <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/[0.08]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-3 w-full">
           {/* Left: Dynamic Back Button & Brand Identity / Dynamic Session Title Input */}
@@ -105,9 +105,11 @@ export function Navbar({
             {/* Dynamic Session Title Input when in active reflection session */}
             {isChatting ? (
               <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
-                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
+                <img
+                  src="/metallic_star_logo.png"
+                  alt="Gemini Journal"
+                  className="h-7 sm:h-8 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] shrink-0 select-none"
+                />
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <input
                     id="navbar-session-title-input"
@@ -125,10 +127,12 @@ export function Navbar({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 shrink-0">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
+              <div className="flex items-center space-x-2.5 shrink-0">
+                <img
+                  src="/metallic_star_logo.png"
+                  alt="Gemini Journal"
+                  className="h-9 sm:h-10 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.35)] shrink-0 select-none"
+                />
                 <div className="flex flex-col">
                   <span className="font-bold text-base sm:text-lg text-white tracking-tight leading-none whitespace-nowrap">
                     Gemini Journal

@@ -133,7 +133,7 @@ gcloud run services update personal-gemini-journal \
 
 | Test Scenario | Action / User Interaction | Expected Result |
 |---|---|---|
-| **1. Authentication Gate** | Open app on fresh browser or incognito. | Sign-in modal appears immediately; user chooses Google Sign-In, Email/Password, or Sandbox Session. |
+| **1. Cosmic Landing Page & Auth** | Open app on fresh browser or incognito as unauthenticated user. | Displays deep cosmic starfield landing page with "✦ AI-POWERED REFLECTIVE INTELLIGENCE" badge, headline, and Login/Sign Up buttons. Clicking either smoothly opens the authentication modal or starts a zero-friction guest sandbox session. |
 | **2. Conversational Chat** | Select "Socratic Guide" persona, type reflection message and click Send. | Server proxy handles request, streams/returns empathetic response with 0 exposed client API keys. |
 | **3. Grounded Search** | Click Search icon, enter topic (e.g., "mindfulness breathing techniques"). | Gemini grounds response using Google Search and displays verified web citation chips. |
 | **4. Voice Studio** | Click microphone icon and begin speaking. | Real-time audio waveform reacts; speech transcription and audio responses stream back smoothly. |

@@ -5,6 +5,7 @@ import {
   subscribeUserEntries,
   deleteJournalEntry,
   updateJournalEntryTitle,
+  signInAsGuest,
 } from './lib/firebase';
 import { Navbar } from './components/Navbar';
 import { JournalList } from './components/JournalList';
@@ -13,7 +14,8 @@ import { EntryDetailModal } from './components/EntryDetailModal';
 import { SentimentAnalytics } from './components/SentimentAnalytics';
 import { SecurityInspector } from './components/SecurityInspector';
 import { AuthModal } from './components/AuthModal';
-import { PlusCircle } from 'lucide-react';
+import { LandingPage } from './components/LandingPage';
+import { PlusCircle, Sparkles } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAuthProfile | null>(null);
@@ -24,8 +26,9 @@ export default function App() {
   const [activeSessionTitle, setActiveSessionTitle] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalStep, setAuthModalStep] = useState<'auth' | 'name_prompt'>('auth');
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
 
@@ -38,7 +41,7 @@ export default function App() {
       setAuthInitialized(true);
       if (!profile) {
         setAuthModalStep('auth');
-        setIsAuthModalOpen(true);
+        setIsAuthModalOpen(false);
         setEntries([]);
       } else {
         setIsAuthModalOpen(false);
@@ -229,11 +232,78 @@ export default function App() {
 
   const isDashboardHome = activeView === 'journal' && !isChatting && selectedEntry === null;
 
+  // Initial authentication initialization screen
+  if (!authInitialized) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+        <img
+          src="/metallic_star_logo.png"
+          alt="Gemini Journal"
+          className="h-16 w-auto object-contain filter drop-shadow-[0_0_16px_rgba(255,255,255,0.4)] mb-4 animate-pulse select-none"
+        />
+        <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold">Loading Gemini Journal...</p>
+      </div>
+    );
+  }
+
+  // If user is unauthenticated, show the Cosmic Landing Page as the root entry
+  if (!currentUser) {
+    return (
+      <>
+        <LandingPage
+          onOpenLogin={() => {
+            setAuthModalStep('auth');
+            setAuthModalMode('signin');
+            setIsAuthModalOpen(true);
+          }}
+          onOpenSignUp={() => {
+            setAuthModalStep('auth');
+            setAuthModalMode('signup');
+            setIsAuthModalOpen(true);
+          }}
+          onOpenSandbox={async () => {
+            try {
+              const guest = await signInAsGuest();
+              setCurrentUser(guest);
+            } catch (err) {
+              console.error('Guest sign in fallback:', err);
+              setAuthModalStep('auth');
+              setAuthModalMode('signin');
+              setIsAuthModalOpen(true);
+            }
+          }}
+          onOpenSecurityInspector={() => setIsSecurityModalOpen(true)}
+        />
+
+        {/* Auth Modal overlay for when user chooses to login or sign up */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          isDismissible={true}
+          initialStep={authModalStep}
+          initialMode={authModalMode}
+          currentUser={currentUser}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            setIsAuthModalOpen(false);
+          }}
+        />
+
+        <SecurityInspector
+          isOpen={isSecurityModalOpen}
+          onClose={() => setIsSecurityModalOpen(false)}
+          currentUser={currentUser}
+        />
+      </>
+    );
+  }
+
+  // Authenticated Journal Workspace
   return (
     <div
       className={`${
         isChatting ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'
-      } bg-[#0A0A0B] text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white`}
+      } bg-black text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white`}
     >
       {/* Top Application Bar with Dynamic Top-Left Back Button & Dynamic Session Title */}
       <Navbar
@@ -246,6 +316,7 @@ export default function App() {
         onOpenNewSession={handleStartNewSession}
         onOpenAuth={() => {
           setAuthModalStep('auth');
+          setAuthModalMode('signin');
           setIsAuthModalOpen(true);
         }}
         onOpenProfile={() => {
@@ -258,7 +329,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className={`flex-1 bg-[#0A0A0B] ${isChatting ? 'flex flex-col min-h-0 overflow-hidden' : ''}`}>
+      <main className={`flex-1 bg-black ${isChatting ? 'flex flex-col min-h-0 overflow-hidden' : ''}`}>
         {/* If user is active in interactive Journal Chat Session */}
         {isChatting ? (
           <JournalChat
@@ -318,15 +389,12 @@ export default function App() {
       />
 
       <AuthModal
-        isOpen={isAuthModalOpen || !currentUser}
-        isDismissible={Boolean(currentUser)}
+        isOpen={isAuthModalOpen}
+        isDismissible={true}
         initialStep={authModalStep}
+        initialMode={authModalMode}
         currentUser={currentUser}
-        onClose={() => {
-          if (currentUser) {
-            setIsAuthModalOpen(false);
-          }
-        }}
+        onClose={() => setIsAuthModalOpen(false)}
         onSuccess={(user) => {
           setCurrentUser(user);
           setIsAuthModalOpen(false);

@@ -26,6 +26,7 @@ interface AuthModalProps {
   isOpen: boolean;
   isDismissible?: boolean;
   initialStep?: 'auth' | 'name_prompt';
+  initialMode?: 'signin' | 'signup';
   currentUser?: UserAuthProfile | null;
   onClose: () => void;
   onSuccess: (user: UserAuthProfile) => void;
@@ -35,12 +36,13 @@ export function AuthModal({
   isOpen,
   isDismissible = true,
   initialStep = 'auth',
+  initialMode = 'signin',
   currentUser = null,
   onClose,
   onSuccess,
 }: AuthModalProps) {
   const [step, setStep] = useState<'auth' | 'name_prompt'>(initialStep);
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,7 @@ export function AuthModal({
   useEffect(() => {
     if (isOpen) {
       setStep(initialStep);
+      setMode(initialMode);
       setError(null);
       if (currentUser) {
         setPendingUser(currentUser);
@@ -61,7 +64,7 @@ export function AuthModal({
         setCustomDisplayName('');
       }
     }
-  }, [isOpen, initialStep, currentUser]);
+  }, [isOpen, initialStep, initialMode, currentUser]);
 
   if (!isOpen) return null;
 
@@ -85,9 +88,14 @@ export function AuthModal({
       }
     } catch (err: any) {
       console.error('Google Auth Error:', err);
-      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        // User closed popup; clean return with no jarring red banner
+        setError(null);
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
         const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
         setError(`Domain "${domain}" is not authorized in Firebase. Add "${domain}" to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Popup was blocked by your browser. Please allow popups for this site to sign in.');
       } else {
         setError(err.message || 'Failed to sign in with Google.');
       }
@@ -126,6 +134,8 @@ export function AuthModal({
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
         const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
         setError(`Domain "${domain}" is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else if (err.code === 'auth/admin-restricted-operation' || err.message?.includes('admin-restricted-operation')) {
+        setError('New account sign-ups are restricted in this Firebase project. Try signing in with Google or explore in Guest Demo mode.');
       } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password credentials.');
       } else if (err.code === 'auth/email-already-in-use') {
@@ -146,12 +156,12 @@ export function AuthModal({
       onSuccess(user);
       onClose();
     } catch (err: any) {
-      console.error('Guest Auth Error:', err);
+      console.warn('Guest Auth Notice:', err);
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('auth/unauthorized-domain')) {
         const domain = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
         setError(`Domain "${domain}" is not authorized. Add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`);
       } else {
-        setError(err.message || 'Guest sign-in failed.');
+        setError(err.message || 'Guest sign-in failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -208,11 +218,13 @@ export function AuthModal({
         {step === 'auth' ? (
           <>
             {/* Header */}
-            <div className="p-6 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">
+            <div className="p-6 border-b border-[#1E1E20] flex items-center justify-between bg-black">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-[#161618] border border-[#2A2A2D] text-[#4285F4] rounded-xl">
-                  <Lock className="w-5 h-5" />
-                </div>
+                <img
+                  src="/metallic_star_logo.png"
+                  alt="Gemini Journal"
+                  className="h-10 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] shrink-0 select-none"
+                />
                 <div>
                   <h2 className="text-base font-bold text-white">
                     {mode === 'signin' ? 'Sign In to Your Journal' : 'Create Secure Journal Account'}
