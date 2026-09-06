@@ -536,7 +536,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
       {/* Discard Draft Confirmation Modal */}
       {showDiscardConfirm && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#121214] border border-[#2A2A2D] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="bg-black border border-[#2A2A2D] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-[#F87171]">
               <div className="p-2.5 rounded-full bg-[#F8717120] border border-[#F8717140]">
                 <X className="w-5 h-5" />
@@ -547,7 +547,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               </div>
             </div>
 
-            <div className="p-3 bg-[#161618] rounded-xl border border-[#222225] text-xs text-[#A0A0A0] leading-relaxed">
+            <div className="p-3 bg-black rounded-xl border border-[#222225] text-xs text-[#A0A0A0] leading-relaxed">
               If you wish to return later, click <strong>"Keep as Draft"</strong> and your writing will be waiting for you.
             </div>
 
@@ -579,9 +579,9 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
       )}
 
       {/* Session Container */}
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col flex-1 min-h-0 h-full">
+      <div className="bg-black border border-[#1E1E20] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col flex-1 min-h-0 h-full">
         {/* Header Bar with Streamlined Controls */}
-        <div className="px-3 sm:px-4 py-2 border-b border-[#1E1E20] bg-[#0A0A0B] flex items-center justify-between gap-2 sm:gap-3 shrink-0 min-h-[46px]">
+        <div className="px-3 sm:px-4 py-2 border-b border-[#1E1E20] bg-black flex items-center justify-between gap-2 sm:gap-3 shrink-0 min-h-[46px]">
           <div className="flex items-center space-x-2 min-w-0 flex-1">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-xs shrink-0">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -593,7 +593,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               <span className="text-[#3A3A40] hidden sm:inline">•</span>
               <span
                 id="journal-autosave-indicator"
-                className="hidden sm:flex text-[#9E9EA5] items-center gap-1 text-[11px] font-medium bg-[#161618] border border-[#2A2A2D] px-2 py-0.5 rounded-md shrink-0 shadow-xs"
+                className="hidden sm:flex text-[#9E9EA5] items-center gap-1 text-[11px] font-medium bg-black border border-[#2A2A2D] px-2 py-0.5 rounded-md shrink-0 shadow-xs"
                 title="Autosaved locally in real-time"
               >
                 <Check className="w-3 h-3 text-[#4ADE80] shrink-0" />
@@ -608,7 +608,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             <button
               id="open-live-voice-btn"
               onClick={() => setIsVoiceStudioOpen(true)}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black hover:bg-white/[0.06] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
               title="Open Gemini Live Voice Conversation Studio"
               aria-label="Open Live Voice Studio"
             >
@@ -620,7 +620,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             <button
               id="open-search-grounding-btn"
               onClick={() => setIsSearchGroundingOpen(true)}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black hover:bg-white/[0.06] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
               title="Explore Google Search Grounded Research"
               aria-label="Explore Search Grounding"
             >
@@ -632,7 +632,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             <button
               id="keep-draft-exit-btn"
               onClick={onCancel}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs text-[#A0A0A0] hover:text-white bg-[#161618] hover:bg-[#1E1E20] border border-[#2A2A2D] rounded-xl transition shrink-0 cursor-pointer flex items-center gap-1.5 font-medium"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs text-[#A0A0A0] hover:text-white bg-black hover:bg-white/[0.06] border border-[#2A2A2D] rounded-xl transition shrink-0 cursor-pointer flex items-center gap-1.5 font-medium"
               title="Keep draft saved and return to timeline"
               aria-label="Keep draft and exit"
             >
@@ -650,7 +650,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
                   handleExplicitDiscard();
                 }
               }}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs text-[#808080] hover:text-[#F87171] bg-[#161618] hover:bg-[#F8717115] border border-[#2A2A2D] hover:border-[#F8717140] rounded-xl transition shrink-0 cursor-pointer flex items-center gap-1.5"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs text-[#808080] hover:text-[#F87171] bg-black hover:bg-[#F8717115] border border-[#2A2A2D] hover:border-[#F8717140] rounded-xl transition shrink-0 cursor-pointer flex items-center gap-1.5"
               title="Discard draft permanently"
               aria-label="Discard draft"
             >
@@ -683,7 +683,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
         </div>
 
         {/* Persona Role Selection & Model Tier Toolbar */}
-        <div className="px-3 sm:px-4 py-1.5 bg-[#121214] border-b border-[#1E1E20] flex items-center justify-between gap-2 sm:gap-3 text-xs overflow-x-auto no-scrollbar shrink-0 min-h-[38px]">
+        <div className="px-3 sm:px-4 py-1.5 bg-black border-b border-[#1E1E20] flex items-center justify-between gap-2 sm:gap-3 text-xs overflow-x-auto no-scrollbar shrink-0 min-h-[38px]">
           {/* Persona Selection */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[10px] uppercase tracking-wider text-[#606060] font-bold mr-0.5 shrink-0 hidden sm:inline">
@@ -774,7 +774,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
         )}
 
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3.5 sm:space-y-4 bg-[#0E0E10]">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3.5 sm:space-y-4 bg-black">
           {messages.map((message) => {
             const isUser = message.role === 'user';
             return (
@@ -792,7 +792,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
                   className={`max-w-xl text-sm leading-relaxed p-4 ${
                     isUser
                       ? 'bg-[#1E1E20] text-[#E0E0E0] rounded-2xl rounded-tr-none border border-[#2A2A2D]'
-                      : 'bg-[#0A0A0B] text-[#C0C0C0] rounded-2xl rounded-tl-none border border-[#1E1E20] shadow-xl'
+                      : 'bg-black text-[#C0C0C0] rounded-2xl rounded-tl-none border border-[#1E1E20] shadow-xl'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{message.content}</div>
@@ -898,7 +898,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center shrink-0 mt-1 text-[10px] font-bold shadow-sm">
                 G
               </div>
-              <div className="bg-[#0A0A0B] border border-[#1E1E20] rounded-2xl p-4 text-xs text-[#808080] flex items-center gap-2 shadow-lg">
+              <div className="bg-black border border-[#1E1E20] rounded-2xl p-4 text-xs text-[#808080] flex items-center gap-2 shadow-lg">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4285F4]" />
                 <span>
                   {useSearchGrounding
@@ -914,7 +914,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
 
         {/* Suggested Starter Prompts - Compact on mobile */}
         {userMessagesCount < 2 && (
-          <div className="px-3 sm:px-6 py-1.5 sm:py-2 bg-[#0A0A0B] border-t border-[#1E1E20]">
+          <div className="px-3 sm:px-6 py-1.5 sm:py-2 bg-black border-t border-[#1E1E20]">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               <span className="text-[10px] uppercase tracking-widest text-[#606060] font-bold shrink-0 flex items-center gap-1">
                 <Lightbulb className="w-3 h-3 text-[#4285F4]" />
@@ -924,7 +924,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(p.prompt)}
-                  className="whitespace-nowrap px-2.5 py-1 bg-[#161618] hover:bg-[#1E1E20] text-[#A0A0A0] hover:text-[#E0E0E0] text-[11px] rounded-lg border border-[#2A2A2D] hover:border-[#3A3A3D] transition shrink-0 shadow-xs cursor-pointer"
+                  className="whitespace-nowrap px-2.5 py-1 bg-black hover:bg-white/[0.06] text-[#A0A0A0] hover:text-[#E0E0E0] text-[11px] rounded-lg border border-[#2A2A2D] hover:border-[#3A3A3D] transition shrink-0 shadow-xs cursor-pointer"
                 >
                   {p.title}
                 </button>
@@ -934,13 +934,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
         )}
 
         {/* Compact Streamlined Input Toolbar (Stationary & Pinned) */}
-        <div className="p-2 sm:p-3 bg-[#0A0A0B] border-t border-[#1E1E20] shrink-0">
+        <div className="p-2 sm:p-3 bg-black border-t border-[#1E1E20] shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="flex items-end gap-1.5 sm:gap-2 bg-[#141416] border border-[#2A2A2D] rounded-2xl p-1.5 sm:p-2 focus-within:border-[#4285F4] transition shadow-inner"
+            className="flex items-end gap-1.5 sm:gap-2 bg-black border border-[#2A2A2D] rounded-2xl p-1.5 sm:p-2 focus-within:border-[#4285F4] transition shadow-inner"
           >
             {/* Quick Mic Dictate Button */}
             <button
@@ -949,7 +949,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               className={`p-2 sm:p-2.5 rounded-xl border transition flex items-center justify-center shrink-0 cursor-pointer ${
                 isDirectRecording
                   ? 'bg-[#F8717120] text-[#F87171] border-[#F8717140] animate-pulse'
-                  : 'bg-[#1A1A1D] text-[#808080] hover:text-white border-[#2A2A2D] hover:border-[#3A3A3D]'
+                  : 'bg-black text-[#808080] hover:text-white border-[#2A2A2D] hover:border-[#3A3A3D]'
               }`}
               title={isDirectRecording ? 'Stop dictation' : 'Dictate with voice'}
             >

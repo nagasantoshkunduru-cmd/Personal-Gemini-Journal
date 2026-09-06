@@ -80,9 +80,9 @@ export function SearchGroundingModal({
 
   return (
     <div id="search-grounding-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
+      <div className="bg-black border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">
+        <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-black">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#34A853] flex items-center justify-center text-white shadow-md">
               <Globe className="w-4 h-4" />
@@ -108,7 +108,7 @@ export function SearchGroundingModal({
         </div>
 
         {/* Content Area */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1 bg-[#0E0E10]">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1 bg-black">
           {/* Search Input Bar */}
           <form
             onSubmit={(e) => {

@@ -142,7 +142,7 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
       {/* Top Controls: Search, Filters, & Tags */}
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-2xl p-5 shadow-sm space-y-4">
+      <div className="bg-black border border-[#1E1E20] rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -308,7 +308,7 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
 
       {/* Entry Cards Grid */}
       {filteredEntries.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-4">
+        <div className="text-center py-16 px-4 bg-black border border-[#1E1E20] rounded-2xl space-y-4">
           <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center mx-auto shadow-md">
             <Sparkles className="w-6 h-6" />
           </div>
@@ -340,7 +340,7 @@ export function JournalList({ entries, currentUser, onSelectEntry, onNewSession,
               <div
                 key={entry.id}
                 onClick={() => onSelectEntry(entry)}
-                className="group bg-[#0E0E10] hover:bg-[#161618] border border-[#1E1E20] hover:border-[#2A2A2D] rounded-2xl p-5 transition cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                className="group bg-black hover:bg-white/[0.03] border border-[#1E1E20] hover:border-[#2A2A2D] rounded-2xl p-5 transition cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
               >
                 {/* Card Top Meta */}
                 <div className="space-y-2">

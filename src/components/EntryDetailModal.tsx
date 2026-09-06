@@ -176,9 +176,9 @@ ${entry.rawTranscript}
       id="entry-detail-modal"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in"
     >
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-black border border-[#1E1E20] rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Top Bar */}
-        <div className="px-6 py-4 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">
+        <div className="px-6 py-4 border-b border-[#1E1E20] flex items-center justify-between bg-black">
           <div className="flex items-center space-x-2">
             <span
               className={`px-3 py-1 rounded text-[10px] font-bold uppercase border flex items-center gap-1.5 ${sentimentStyle.badge}`}
@@ -415,7 +415,7 @@ ${entry.rawTranscript}
             </button>
 
             {showRawChat && (
-              <div className="p-5 space-y-4 bg-[#0A0A0B] text-xs border-t border-[#1E1E20] max-h-72 overflow-y-auto">
+              <div className="p-5 space-y-4 bg-black text-xs border-t border-[#1E1E20] max-h-72 overflow-y-auto">
                 {entry.messages && entry.messages.length > 0 ? (
                   entry.messages.map((m, idx) => (
                     <div
@@ -443,7 +443,7 @@ ${entry.rawTranscript}
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-[#1E1E20] bg-[#0A0A0B] flex items-center justify-between text-xs text-[#808080]">
+        <div className="px-6 py-4 border-t border-[#1E1E20] bg-black flex items-center justify-between text-xs text-[#808080]">
           <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-1 rounded">
             <Shield className="w-3.5 h-3.5" />
             <span>Vault Protected: users/{entry.userId.slice(0, 6)}...</span>

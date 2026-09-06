@@ -128,7 +128,7 @@ export function SentimentAnalytics({
 
       {/* Top 4 KPI Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
+        <div className="p-5 bg-black border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
           <span className="text-[10px] uppercase tracking-widest text-[#606060] font-bold">Total Entries</span>
           <div className="text-2xl font-bold text-white">
             {stats.total}
@@ -138,7 +138,7 @@ export function SentimentAnalytics({
           </span>
         </div>
 
-        <div className="p-5 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
+        <div className="p-5 bg-black border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
           <span className="text-[10px] uppercase tracking-widest text-[#606060] font-bold">Avg Sentiment Score</span>
           <div className="text-2xl font-bold text-[#4285F4]">
             {stats.avgSentiment >= 0 ? `+${stats.avgSentiment.toFixed(2)}` : stats.avgSentiment.toFixed(2)}
@@ -148,7 +148,7 @@ export function SentimentAnalytics({
           </span>
         </div>
 
-        <div className="p-5 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
+        <div className="p-5 bg-black border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
           <span className="text-[10px] uppercase tracking-widest text-[#606060] font-bold">Words Reflected</span>
           <div className="text-2xl font-bold text-white">
             {stats.totalWords.toLocaleString()}
@@ -156,7 +156,7 @@ export function SentimentAnalytics({
           <span className="text-[11px] text-[#808080]">Unpacked & sanitized</span>
         </div>
 
-        <div className="p-5 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
+        <div className="p-5 bg-black border border-[#1E1E20] rounded-2xl space-y-1 shadow-sm">
           <span className="text-[10px] uppercase tracking-widest text-[#606060] font-bold">Unique Themes</span>
           <div className="text-2xl font-bold text-[#9B72F3]">
             {Object.keys(stats.tagCounts).length}
@@ -168,7 +168,7 @@ export function SentimentAnalytics({
       {/* Main Analysis Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sentiment Breakdown */}
-        <div className="p-6 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-4 shadow-sm">
+        <div className="p-6 bg-black border border-[#1E1E20] rounded-2xl space-y-4 shadow-sm">
           <h2 className="text-xs uppercase tracking-widest text-[#606060] font-bold flex items-center gap-2">
             <Smile className="w-4 h-4 text-[#4285F4]" />
             Sentiment Distribution Breakdown
@@ -201,7 +201,7 @@ export function SentimentAnalytics({
         </div>
 
         {/* Top Keywords & Tag Cloud */}
-        <div className="p-6 bg-[#0E0E10] border border-[#1E1E20] rounded-2xl space-y-4 shadow-sm">
+        <div className="p-6 bg-black border border-[#1E1E20] rounded-2xl space-y-4 shadow-sm">
           <h2 className="text-xs uppercase tracking-widest text-[#606060] font-bold flex items-center gap-2">
             <Tag className="w-4 h-4 text-[#4285F4]" />
             Extracted Semantic Tags
@@ -216,7 +216,7 @@ export function SentimentAnalytics({
               <button
                 key={tag}
                 onClick={() => onSelectTag(tag)}
-                className="px-3 py-1.5 bg-[#161618] hover:bg-[#1E1E20] text-[#E0E0E0] rounded-xl text-xs font-medium border border-[#2A2A2D] hover:border-[#3A3A3D] transition flex items-center gap-1.5 shadow-xs"
+                className="px-3 py-1.5 bg-black hover:bg-white/[0.06] text-[#E0E0E0] rounded-xl text-xs font-medium border border-[#2A2A2D] hover:border-[#3A3A3D] transition flex items-center gap-1.5 shadow-xs"
               >
                 <span className="text-[#4285F4]">#{tag}</span>
                 <span className="text-[10px] bg-[#2A2A2D] text-[#A0A0A0] px-1.5 py-0.5 rounded-full font-mono font-bold">

@@ -5,8 +5,7 @@ import {
   ShieldCheck,
   Brain,
   Mic,
-  Lock,
-  Star
+  Lock
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -148,12 +147,12 @@ export function LandingPage({
           </p>
 
           {/* Centered CTA Buttons (Responsive Flexbox avoiding mobile overlap) */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none mb-10 sm:mb-14">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none mb-12 sm:mb-16">
             {/* Prominent Login Button */}
             <button
               id="landing-hero-login-btn"
               onClick={onOpenLogin}
-              className="w-full sm:w-auto min-w-[140px] px-7 py-3 sm:py-3.5 rounded-full bg-[#111114] hover:bg-[#1A1A20] border border-white/20 hover:border-white/40 text-white font-medium text-sm sm:text-base shadow-lg shadow-black/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full sm:w-auto min-w-[140px] px-7 py-3 sm:py-3.5 rounded-full bg-black hover:bg-white/[0.06] border border-white/20 hover:border-white/40 text-white font-medium text-sm sm:text-base shadow-lg shadow-black/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
               <span>Login</span>
             </button>
@@ -168,20 +167,6 @@ export function LandingPage({
               <ArrowRight className="w-4 h-4 text-neutral-950 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
-
-          {/* Quick Sandbox / Instant Demo Link */}
-          {onOpenSandbox && (
-            <div className="text-xs text-neutral-400 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mb-12 sm:mb-16 px-4 text-center">
-              <span>Just browsing?</span>
-              <button
-                id="landing-instant-sandbox-btn"
-                onClick={onOpenSandbox}
-                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 font-medium transition-colors cursor-pointer"
-              >
-                Launch instant sandbox guest session →
-              </button>
-            </div>
-          )}
 
           {/* 4. COSMIC CAPABILITY HIGHLIGHTS */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 w-full max-w-3xl mt-2 text-left">
@@ -221,18 +206,8 @@ export function LandingPage({
 
       {/* 5. FOOTER */}
       <footer className="relative z-10 border-t border-white/[0.06] py-6 sm:py-8 text-center text-xs text-neutral-500 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Gemini Journal • Built with Google AI Studio &amp; Gemini 3.5</p>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-neutral-400">
-            <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              OWASP &amp; Agentic Threat Protected
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-              APAC Ideathon Edition
-            </span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center">
+          <p>© 2026 Gemini Journal • AI powered Gemini journal</p>
         </div>
       </footer>
     </div>

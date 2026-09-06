@@ -276,7 +276,7 @@ export function Navbar({
 
                 {/* Dropdown */}
                 {showUserDropdown && (
-                  <div className="absolute right-0 mt-2 w-64 bg-[#161618] border border-[#2A2A2D] rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-2 w-64 bg-black border border-[#2A2A2D] rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-2.5 border-b border-[#2A2A2D]">
                       <div className="flex items-center gap-2.5 mb-1.5">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center text-sm font-bold shrink-0 border border-[#4285F4]/40 shadow-xs">
@@ -443,7 +443,7 @@ export function Navbar({
 
       {/* Mobile Drawer / Slide-down Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-[#1E1E20] bg-[#0E0E10] px-4 pt-3 pb-6 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden border-t border-[#1E1E20] bg-black px-4 pt-3 pb-6 space-y-4 shadow-2xl animate-in slide-in-from-top-2 duration-200">
           {/* User Status Card */}
           {user ? (
             <div className="p-3 bg-[#161618] border border-[#2A2A2D] rounded-2xl flex items-center justify-between gap-2">
@@ -557,7 +557,7 @@ export function Navbar({
                 <PlusCircle className="w-4 h-4 text-neutral-900" />
                 <span className="text-neutral-900">Start New Reflection Session</span>
               </div>
-              <span className="text-[10px] bg-neutral-900 text-white px-2 py-0.5 rounded-md font-bold">New</span>
+              <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-md font-bold border border-[#2A2A2D]">New</span>
             </button>
           </div>
 

@@ -4,11 +4,38 @@
   * {
     border-color: #1E1E20;
   }
-  body {
-    background-color: #000000;
+  :root,
+  html,
+  body,
+  #root,
+  .app-container,
+  main {
+    background-color: #000000 !important;
+    background: #000000 !important;
     color: #E0E0E0;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+}
+
+/* =========================================================
+   PURE PITCH-BLACK SURFACE ENFORCEMENT
+   ========================================================= */
+html:not([data-theme="light"]) .bg-\[\#08080A\],
+html:not([data-theme="light"]) .bg-\[\#0A0A0B\],
+html:not([data-theme="light"]) .bg-\[\#0E0E10\],
+html:not([data-theme="light"]) .bg-\[\#111114\],
+html:not([data-theme="light"]) .bg-\[\#121214\],
+html:not([data-theme="light"]) .bg-\[\#141416\],
+html:not([data-theme="light"]) .bg-neutral-900,
+html:not([data-theme="light"]) .bg-neutral-950,
+html:not([data-theme="light"]) .bg-zinc-900,
+html:not([data-theme="light"]) .bg-zinc-950,
+html:not([data-theme="light"]) .bg-gray-900,
+html:not([data-theme="light"]) .bg-gray-950,
+html:not([data-theme="light"]) .bg-slate-900,
+html:not([data-theme="light"]) .bg-slate-950 {
+  background-color: #000000 !important;
+  background: #000000 !important;
 }
 
 /* =========================================================

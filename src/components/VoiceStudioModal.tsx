@@ -285,9 +285,9 @@ export function VoiceStudioModal({
 
   return (
     <div id="voice-studio-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#0E0E10] border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
+      <div className="bg-black border border-[#1E1E20] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-[#0A0A0B]">
+        <div className="p-5 border-b border-[#1E1E20] flex items-center justify-between bg-black">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] flex items-center justify-center text-white shadow-md">
               <Radio className="w-4 h-4" />
@@ -306,14 +306,14 @@ export function VoiceStudioModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#808080] hover:text-white rounded-lg hover:bg-[#161618] transition"
+            className="p-1.5 text-[#808080] hover:text-white rounded-lg hover:bg-white/[0.06] transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Visualizer Area */}
-        <div className="relative h-64 bg-[#08080A] flex flex-col items-center justify-center overflow-hidden">
+        <div className="relative h-64 bg-black flex flex-col items-center justify-center overflow-hidden">
           <canvas
             ref={canvasRef}
             width={400}
@@ -359,7 +359,7 @@ export function VoiceStudioModal({
         </div>
 
         {/* Controls */}
-        <div className="p-6 bg-[#0A0A0B] border-t border-[#1E1E20] space-y-4">
+        <div className="p-6 bg-black border-t border-[#1E1E20] space-y-4">
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => setIsMicMuted(!isMicMuted)}
