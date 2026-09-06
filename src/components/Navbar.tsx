@@ -84,8 +84,8 @@ export function Navbar({
 
   return (
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/[0.08]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-3 w-full">
+      <div className="w-full px-4 sm:px-6">
+        <div className="flex items-center justify-between h-12 sm:h-14 gap-2 sm:gap-3 w-full">
           {/* Left: Dynamic Back Button & Brand Identity / Dynamic Session Title Input */}
           <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
             {/* Top Left Back Button (Visible when navigating away from Home/Dashboard) */}
@@ -108,7 +108,7 @@ export function Navbar({
                 <img
                   src="/metallic_star_logo.png"
                   alt="Gemini Journal"
-                  className="h-7 sm:h-8 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] shrink-0 select-none"
+                  className="h-6 sm:h-7 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] shrink-0 select-none"
                 />
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <input
@@ -131,7 +131,7 @@ export function Navbar({
                 <img
                   src="/metallic_star_logo.png"
                   alt="Gemini Journal"
-                  className="h-9 sm:h-10 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.35)] shrink-0 select-none"
+                  className="h-8 sm:h-9 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] shrink-0 select-none"
                 />
                 <div className="flex flex-col">
                   <span className="font-bold text-base sm:text-lg text-white tracking-tight leading-none whitespace-nowrap">

@@ -150,6 +150,11 @@ export default function App() {
   }, [entries, pendingEntryId, selectedEntry]);
 
   const handleSetActiveView = (view: 'journal' | 'analytics') => {
+    if (!currentUser || currentUser.isAnonymous) {
+      setAuthModalStep('auth');
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (view !== activeView) {
       setHistory((prev) => [...prev, view]);
     }
@@ -183,7 +188,8 @@ export default function App() {
   };
 
   const handleStartNewSession = () => {
-    if (!currentUser) {
+    if (!currentUser || currentUser.isAnonymous) {
+      setAuthModalStep('auth');
       setIsAuthModalOpen(true);
     } else {
       setActiveSessionTitle('');
@@ -204,7 +210,8 @@ export default function App() {
   };
 
   const handleUpdateEntryTitle = async (entryId: string, newTitle: string) => {
-    if (!currentUser?.uid) {
+    if (!currentUser || currentUser.isAnonymous) {
+      setAuthModalStep('auth');
       setIsAuthModalOpen(true);
       return;
     }
@@ -219,7 +226,8 @@ export default function App() {
   };
 
   const handleDeleteEntry = async (entryId: string) => {
-    if (!currentUser) {
+    if (!currentUser || currentUser.isAnonymous) {
+      setAuthModalStep('auth');
       setIsAuthModalOpen(true);
       return;
     }

@@ -128,15 +128,15 @@ export function LandingPage({
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center w-full">
           
           {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-purple-500/[0.12] border border-purple-400/30 text-purple-300 text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-6 sm:mb-8 shadow-sm backdrop-blur-md max-w-full text-center animate-in fade-in slide-in-from-top-3 duration-500">
-            <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-pulse shrink-0" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-neutral-800 border border-neutral-700 text-white text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-6 sm:mb-8 shadow-sm backdrop-blur-md max-w-full text-center animate-in fade-in slide-in-from-top-3 duration-500">
+            <Sparkles className="w-3.5 h-3.5 text-white animate-pulse shrink-0" />
             <span className="truncate sm:whitespace-normal">✦ AI-POWERED REFLECTIVE INTELLIGENCE</span>
           </div>
 
           {/* Main Heading with Colorful Gradient Accent Word */}
           <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.18] sm:leading-[1.12] mb-4 sm:mb-6 max-w-3xl">
             Bridge the Gap Between Thoughts &amp;{' '}
-            <span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-purple-400 bg-clip-text text-transparent italic font-normal pr-1 inline-block">
+            <span className="bg-gradient-to-b from-white via-neutral-300 to-neutral-500 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] italic font-normal pr-1 inline-block">
               Clarity
             </span>
           </h1>
@@ -205,9 +205,13 @@ export function LandingPage({
       </main>
 
       {/* 5. FOOTER */}
-      <footer className="relative z-10 border-t border-white/[0.06] py-6 sm:py-8 text-center text-xs text-neutral-500 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center">
-          <p>© 2026 Gemini Journal • AI powered Gemini journal</p>
+      <footer className="relative z-10 border-t border-white/[0.06] py-6 sm:py-8 text-neutral-500 bg-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-neutral-500">© 2026 Gemini Journal • AI powered Gemini journal</p>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/[0.06] border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>OWASP &amp; Agentic Threat Protected</span>
+          </div>
         </div>
       </footer>
     </div>

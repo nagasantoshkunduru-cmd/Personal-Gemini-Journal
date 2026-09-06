@@ -273,6 +273,11 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
   ]);
 
   const handleSendMessage = async (customPrompt?: string) => {
+    if (!currentUser || currentUser.isAnonymous) {
+      onRequireAuth?.();
+      return;
+    }
+
     const rawContent = customPrompt || inputText;
     const cleanContent = sanitizeText(rawContent);
 
@@ -463,7 +468,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
   };
 
   const handleCompleteSession = async () => {
-    if (!currentUser) {
+    if (!currentUser || currentUser.isAnonymous) {
       if (onRequireAuth) {
         onRequireAuth();
       } else {
@@ -607,7 +612,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             {/* Live Voice */}
             <button
               id="open-live-voice-btn"
-              onClick={() => setIsVoiceStudioOpen(true)}
+              onClick={() => {
+                if (!currentUser || currentUser.isAnonymous) {
+                  onRequireAuth?.();
+                } else {
+                  setIsVoiceStudioOpen(true);
+                }
+              }}
               className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black hover:bg-white/[0.06] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
               title="Open Gemini Live Voice Conversation Studio"
               aria-label="Open Live Voice Studio"
@@ -619,7 +630,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
             {/* Search Grounding Insights */}
             <button
               id="open-search-grounding-btn"
-              onClick={() => setIsSearchGroundingOpen(true)}
+              onClick={() => {
+                if (!currentUser || currentUser.isAnonymous) {
+                  onRequireAuth?.();
+                } else {
+                  setIsSearchGroundingOpen(true);
+                }
+              }}
               className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black hover:bg-white/[0.06] border border-[#2A2A2D] hover:border-[#4285F4] text-xs font-semibold text-[#E0E0E0] shadow-xs transition shrink-0 cursor-pointer flex items-center gap-1.5"
               title="Explore Google Search Grounded Research"
               aria-label="Explore Search Grounding"
@@ -695,7 +712,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
               return (
                 <button
                   key={p.id}
-                  onClick={() => setSelectedPersona(p.id)}
+                  onClick={() => {
+                    if (!currentUser || currentUser.isAnonymous) {
+                      onRequireAuth?.();
+                    } else {
+                      setSelectedPersona(p.id);
+                    }
+                  }}
                   title={p.tagline}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition shrink-0 cursor-pointer ${
                     isSelected
@@ -713,7 +736,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
           {/* Model Selector & Real-Time Search Grounding */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
-              onClick={() => setUseSearchGrounding(!useSearchGrounding)}
+              onClick={() => {
+                if (!currentUser || currentUser.isAnonymous) {
+                  onRequireAuth?.();
+                } else {
+                  setUseSearchGrounding(!useSearchGrounding);
+                }
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition shrink-0 cursor-pointer ${
                 useSearchGrounding
                   ? 'bg-[#1A2838] text-[#4285F4] border-[#224060]'
@@ -733,7 +762,13 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
 
             <select
               value={selectedModelTier}
-              onChange={(e) => setSelectedModelTier(e.target.value as ModelTier)}
+              onChange={(e) => {
+                if (!currentUser || currentUser.isAnonymous) {
+                  onRequireAuth?.();
+                } else {
+                  setSelectedModelTier(e.target.value as ModelTier);
+                }
+              }}
               className="bg-[#161618] text-[#C0C0C0] border border-[#2A2A2D] rounded-lg px-2.5 py-1 text-xs font-mono focus:outline-hidden focus:border-[#4285F4] cursor-pointer shrink-0"
             >
               {MODEL_OPTIONS.map((m) => (

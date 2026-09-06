@@ -9,6 +9,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
   User,
 } from 'firebase/auth';
 import {
@@ -351,6 +352,13 @@ export async function signUpWithEmail(email: string, pass: string): Promise<User
   const profile = formatUserProfile(result.user);
   if (!profile) throw new Error('Failed to create user account');
   return profile;
+}
+
+/**
+ * Send password reset email
+ */
+export async function resetPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
 }
 
 /**

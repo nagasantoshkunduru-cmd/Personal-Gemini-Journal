@@ -133,11 +133,12 @@ gcloud run services update personal-gemini-journal \
 
 | Test Scenario | Action / User Interaction | Expected Result |
 |---|---|---|
-| **1. Cosmic Landing Page & Auth** | Open app on fresh browser or incognito as unauthenticated user. | Displays deep cosmic starfield landing page with "✦ AI-POWERED REFLECTIVE INTELLIGENCE" badge, headline, and Login/Sign Up buttons. Clicking either smoothly opens the authentication modal or starts a zero-friction guest sandbox session. |
-| **2. Conversational Chat** | Select "Socratic Guide" persona, type reflection message and click Send. | Server proxy handles request, streams/returns empathetic response with 0 exposed client API keys. |
-| **3. Grounded Search** | Click Search icon, enter topic (e.g., "mindfulness breathing techniques"). | Gemini grounds response using Google Search and displays verified web citation chips. |
-| **4. Voice Studio** | Click microphone icon and begin speaking. | Real-time audio waveform reacts; speech transcription and audio responses stream back smoothly. |
-| **5. Session Synthesis** | Click "Finish & Synthesize Session". | AI generates executive summary, mood analytics, emotional score, and tags formatted via JSON schema. |
-| **6. Isolated Persistence** | Save synthesized journal entry. | Entry is persisted strictly to `/users/{userId}/entries/{entryId}` in Firestore. Other users cannot access it. |
-| **7. Mood Analytics** | Switch to the "Analytics" tab in navigation. | Interactive charts render historical sentiment trends, emotion distribution, and keyword cloud. |
-| **8. Security Inspector** | Click the shield icon in the top header. | Real-time audit modal confirms zero client keys, active user UID path, and deployed security rules. |
+| **1. Cosmic Landing Page & Auth** | Open app on fresh browser or incognito as unauthenticated user, then click Login or Sign Up. | Displays deep cosmic starfield landing page with solid dark gray "✦ AI-POWERED REFLECTIVE INTELLIGENCE" badge, metallic "Clarity" typography, and Login/Sign Up buttons. Clicking opens the polished two-column split authentication modal featuring app branding and value props on the left, and input credentials with name, email, password, confirm password, and Google login on the right. |
+| **2. Guest Gating Intercept** | Click "Guest Explorer Session" to run in sandbox, then attempt any of: starting a new entry, sending a chat message, clicking starter prompts, opening Voice/Search studio, or toggling model/personas. | The action is blocked, and the sign-in modal instantly displays prompting immediate authentication. |
+| **3. Conversational Chat** | Sign in as user, select "Socratic Guide" persona, type reflection message and click Send. | Server proxy handles request, streams/returns empathetic response with 0 exposed client API keys. |
+| **4. Grounded Search** | Click Search icon, enter topic (e.g., "mindfulness breathing techniques"). | Gemini grounds response using Google Search and displays verified web citation chips. |
+| **5. Voice Studio** | Click microphone icon and begin speaking. | Real-time audio waveform reacts; speech transcription and audio responses stream back smoothly. |
+| **6. Session Synthesis** | Click "Finish & Synthesize Session". | AI generates executive summary, mood analytics, emotional score, and tags formatted via JSON schema. |
+| **7. Isolated Persistence** | Save synthesized journal entry. | Entry is persisted strictly to `/users/{userId}/entries/{entryId}` in Firestore. Other users cannot access it. |
+| **8. Mood Analytics** | Switch to the "Analytics" tab in navigation. | Interactive charts render historical sentiment trends, emotion distribution, and keyword cloud. |
+| **9. Security Inspector** | Click the shield icon in the top header. | Real-time audit modal confirms zero client keys, active user UID path, and deployed security rules. |

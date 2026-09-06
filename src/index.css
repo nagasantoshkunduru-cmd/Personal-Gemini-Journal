@@ -10,10 +10,25 @@
   #root,
   .app-container,
   main {
-    background-color: #000000 !important;
-    background: #000000 !important;
     color: #E0E0E0;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  html:not([data-theme="light"]),
+  html:not([data-theme="light"]) body,
+  html:not([data-theme="light"]) #root,
+  html:not([data-theme="light"]) .app-container,
+  html:not([data-theme="light"]) main {
+    background-color: #000000 !important;
+    background: #000000 !important;
+  }
+
+  html[data-theme="light"] #root,
+  html[data-theme="light"] .app-container,
+  html[data-theme="light"] main {
+    background-color: #F8F9FA !important;
+    background: #F8F9FA !important;
+    color: #1F2937 !important;
   }
 }
 
@@ -59,6 +74,36 @@ html[data-theme="light"] * {
 [data-theme="light"] .bg-\[\#0A0A0B\],
 [data-theme="light"] .bg-\[\#08080A\] {
   background-color: #F8F9FA !important;
+}
+
+[data-theme="light"] .bg-black {
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] main.bg-black,
+[data-theme="light"] div.min-h-screen.bg-black,
+[data-theme="light"] .app-container.bg-black {
+  background-color: #F8F9FA !important;
+}
+
+/* Maintain beautiful, soft transparent overlays for modals in light mode */
+[data-theme="light"] .fixed.bg-black\/80,
+[data-theme="light"] .fixed.bg-black\/50,
+[data-theme="light"] .fixed.bg-black\/60,
+[data-theme="light"] .fixed.bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+[data-theme="light"] .bg-neutral-900,
+[data-theme="light"] .bg-neutral-950,
+[data-theme="light"] .bg-zinc-900,
+[data-theme="light"] .bg-zinc-950,
+[data-theme="light"] .bg-gray-900,
+[data-theme="light"] .bg-gray-950,
+[data-theme="light"] .bg-slate-900,
+[data-theme="light"] .bg-slate-950 {
+  background-color: #FFFFFF !important;
 }
 
 [data-theme="light"] .bg-\[\#0A0A0B\]\/95 {
@@ -189,22 +234,31 @@ html[data-theme="light"] * {
 .btn-primary-cta,
 button.btn-primary-cta,
 [data-theme="dark"] .btn-primary-cta,
-[data-theme="light"] .btn-primary-cta,
-html[data-theme="dark"] .btn-primary-cta,
-html[data-theme="light"] .btn-primary-cta {
+html[data-theme="dark"] .btn-primary-cta {
   background-color: #FFFFFF !important;
   color: #111827 !important;
   border-color: #D1D5DB !important;
 }
 
+[data-theme="light"] .btn-primary-cta,
+html[data-theme="light"] .btn-primary-cta {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
 .btn-primary-cta:hover,
 button.btn-primary-cta:hover,
 [data-theme="dark"] .btn-primary-cta:hover,
-[data-theme="light"] .btn-primary-cta:hover,
-html[data-theme="dark"] .btn-primary-cta:hover,
-html[data-theme="light"] .btn-primary-cta:hover {
+html[data-theme="dark"] .btn-primary-cta:hover {
   background-color: #F3F4F6 !important;
   border-color: #9CA3AF !important;
+}
+
+[data-theme="light"] .btn-primary-cta:hover,
+html[data-theme="light"] .btn-primary-cta:hover {
+  background-color: #1F2937 !important;
+  border-color: #1F2937 !important;
 }
 
 .btn-primary-cta:active,
@@ -221,10 +275,13 @@ button.btn-primary-cta:disabled {
 .btn-primary-cta *,
 button.btn-primary-cta *,
 [data-theme="dark"] .btn-primary-cta *,
-[data-theme="light"] .btn-primary-cta *,
-html[data-theme="dark"] .btn-primary-cta *,
-html[data-theme="light"] .btn-primary-cta * {
+html[data-theme="dark"] .btn-primary-cta * {
   color: #111827 !important;
+}
+
+[data-theme="light"] .btn-primary-cta *,
+html[data-theme="light"] .btn-primary-cta * {
+  color: #FFFFFF !important;
 }
 
 /* =========================================================
