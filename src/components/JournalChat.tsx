@@ -13,6 +13,7 @@ import {
   Tag,
   ArrowRight,
   MessageSquare,
+  AlertCircle,
   FileText,
   Save,
   Trash2,
@@ -23,6 +24,8 @@ import {
   Globe,
   Mic,
   MicOff,
+  Pause,
+  Play,
   Volume2,
   VolumeX,
   ExternalLink,
@@ -43,10 +46,11 @@ import type {
 } from '../types';
 import { sanitizeText, getSentimentColor } from '../lib/sanitize';
 import { saveJournalEntry, getEmailNameFallback } from '../lib/firebase';
-import { playPcm24kAudio, stopGlobalAudio } from '../lib/audioUtils';
+import { playPcm24kAudio, stopGlobalAudio, getSharedTtsAnalyser } from '../lib/audioUtils';
 import { saveDraft, getDraft, clearDraft } from '../lib/draftManager';
 import { VoiceStudioModal } from './VoiceStudioModal';
 import { SearchGroundingModal } from './SearchGroundingModal';
+import { AudioVisualizer } from './AudioVisualizer';
 
 interface JournalChatProps {
   currentUser: UserAuthProfile | null;
@@ -172,14 +176,34 @@ export function JournalChat({
   const [loadingAudioMessageId, setLoadingAudioMessageId] = useState<string | null>(null);
   const audioAbortControllerRef = useRef<AbortController | null>(null);
 
-  // Direct Recording State
+  // Direct Recording State & Controls
   const [isDirectRecording, setIsDirectRecording] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [micAnalyser, setMicAnalyser] = useState<AnalyserNode | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const micAnalyserRef = useRef<AnalyserNode | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
+  const isCancelledRef = useRef<boolean>(false);
+  const preRecordingTextRef = useRef<string>('');
+  const isDirectRecordingRef = useRef<boolean>(false);
+
+  // Persistent Cumulative Transcription & Silence Detection Refs
+  const cumulativeFinalTextRef = useRef<string>('');
+  const currentInstanceFinalRef = useRef<string>('');
+  const hasSpokenRef = useRef<boolean>(false);
+  const lastSpeechTimeRef = useRef<number>(0);
+  const silenceIntervalRef = useRef<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Stop audio playback and cancel active fetches on unmount
+  // Stop audio playback, recording, and cancel active fetches on unmount
   useEffect(() => {
     return () => {
       if (audioAbortControllerRef.current) {
@@ -187,6 +211,34 @@ export function JournalChat({
         audioAbortControllerRef.current = null;
       }
       stopGlobalAudio();
+
+      if (silenceIntervalRef.current) {
+        window.clearInterval(silenceIntervalRef.current);
+        silenceIntervalRef.current = null;
+      }
+
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.abort();
+        } catch {}
+        speechRecognitionRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {}
+        mediaRecorderRef.current = null;
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch {}
+        audioContextRef.current = null;
+      }
     };
   }, []);
 
@@ -278,8 +330,23 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
       return;
     }
 
-    const rawContent = customPrompt || inputText;
+    // If submitting while recording was active, cleanly finalize recording
+    if (silenceIntervalRef.current) {
+      window.clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
+    }
+    setSilenceCountdown(null);
+    hasSpokenRef.current = false;
+
+    if (isDirectRecordingRef.current) {
+      stopRecording();
+    }
+
+    const rawContent = customPrompt || inputText || liveTranscript;
     const cleanContent = sanitizeText(rawContent);
+
+    cumulativeFinalTextRef.current = '';
+    currentInstanceFinalRef.current = '';
 
     if (!cleanContent || isAiReplying || isFinishingSession) return;
 
@@ -293,6 +360,7 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
     const newHistory = [...messages, userMessage];
     setMessages(newHistory);
     setInputText('');
+    setLiveTranscript('');
     setIsAiReplying(true);
 
     try {
@@ -414,11 +482,44 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
     }
   };
 
-  // Quick microphone transcription
+  // Quick microphone recording with real-time AnalyserNode, persistent cumulative transcription, and silence auto-submit
   const startRecording = async () => {
     try {
+      setMicError(null);
+      isCancelledRef.current = false;
+      preRecordingTextRef.current = inputText;
+
+      // Initialize persistent cumulative accumulation
+      // Any text already in the input is preserved at the beginning of the cumulative buffer
+      cumulativeFinalTextRef.current = inputText ? `${inputText.trim()} ` : '';
+      currentInstanceFinalRef.current = '';
+      hasSpokenRef.current = false;
+      lastSpeechTimeRef.current = Date.now();
+      setSilenceCountdown(null);
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       audioChunksRef.current = [];
+
+      // 1. Initialize Web Audio API AnalyserNode for exact real-time frequency visualizer & silence monitoring
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      audioContextRef.current = audioCtx;
+
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64; // 32 frequency bins
+      analyser.smoothingTimeConstant = 0.75;
+      analyser.minDecibels = -85;
+      analyser.maxDecibels = -10;
+
+      const sourceNode = audioCtx.createMediaStreamSource(stream);
+      sourceNodeRef.current = sourceNode;
+      sourceNode.connect(analyser);
+      // NOTE: sourceNode is NOT connected to audioCtx.destination to prevent microphone feedback loop
+
+      setMicAnalyser(analyser);
+      micAnalyserRef.current = analyser;
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -429,42 +530,258 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
       };
 
       mediaRecorder.onstop = async () => {
+        if (isCancelledRef.current) {
+          return; // Discarded by user
+        }
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Data = (reader.result as string).split(',')[1];
-          try {
-            const res = await fetch('/api/voice/transcribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ audio: base64Data, mimeType: 'audio/webm' }),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.transcription) {
-                setInputText((prev) => (prev ? `${prev} ${data.transcription}` : data.transcription));
+        if (audioBlob.size > 0) {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            if (isCancelledRef.current) return;
+            const base64Data = (reader.result as string).split(',')[1];
+            try {
+              const res = await fetch('/api/voice/transcribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audio: base64Data, mimeType: 'audio/webm' }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.transcription) {
+                  const serverText = data.transcription.trim();
+                  setInputText((prev) => {
+                    if (!prev.trim()) return serverText;
+                    return prev;
+                  });
+                }
+              }
+            } catch (e) {
+              console.error('Transcription fallback error:', e);
+            }
+          };
+        }
+
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      // 2. Persistent Live Transcription Engine (Cumulative Accumulation)
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          recognition.onresult = (event: any) => {
+            let sessionFinal = '';
+            let sessionInterim = '';
+
+            for (let i = 0; i < event.results.length; ++i) {
+              const res = event.results[i];
+              const transcript = res[0]?.transcript || '';
+              if (res.isFinal) {
+                sessionFinal += transcript + ' ';
+              } else {
+                sessionInterim += transcript;
               }
             }
-          } catch (e) {
-            console.error('Transcription error:', e);
+
+            currentInstanceFinalRef.current = sessionFinal;
+
+            // Persistent Cumulative Assembly: Prior confirmed sentences + current session final + current interim
+            const fullCombinedText = `${cumulativeFinalTextRef.current}${sessionFinal}${sessionInterim}`.trim();
+            if (fullCombinedText) {
+              setLiveTranscript(fullCombinedText);
+              setInputText(fullCombinedText);
+              hasSpokenRef.current = true;
+              lastSpeechTimeRef.current = Date.now();
+              setSilenceCountdown(null);
+            }
+          };
+
+          recognition.onerror = (err: any) => {
+            console.warn('[SpeechRecognition] warning:', err.error);
+          };
+
+          recognition.onend = () => {
+            if (isDirectRecordingRef.current && !isCancelledRef.current) {
+              // Permanently commit completed instance finals into the cumulative buffer before restarting
+              if (currentInstanceFinalRef.current) {
+                cumulativeFinalTextRef.current = `${cumulativeFinalTextRef.current}${currentInstanceFinalRef.current}`.trim() + ' ';
+                currentInstanceFinalRef.current = '';
+              }
+              try {
+                recognition.start();
+              } catch {}
+            }
+          };
+
+          recognition.start();
+          speechRecognitionRef.current = recognition;
+        } catch (err) {
+          console.warn('[SpeechRecognition] could not start:', err);
+        }
+      }
+
+      // 3. Silence Detection Loop (Auto-submit after 3 consecutive seconds of silence following speech)
+      if (silenceIntervalRef.current) {
+        window.clearInterval(silenceIntervalRef.current);
+      }
+
+      silenceIntervalRef.current = window.setInterval(() => {
+        if (!isDirectRecordingRef.current || isCancelledRef.current) return;
+
+        const activeAnalyser = micAnalyserRef.current;
+        if (!activeAnalyser) return;
+
+        const binCount = activeAnalyser.frequencyBinCount;
+        const freqData = new Uint8Array(binCount);
+        activeAnalyser.getByteFrequencyData(freqData);
+
+        let energySum = 0;
+        for (let i = 0; i < binCount; i++) {
+          energySum += freqData[i];
+        }
+        const avgEnergy = energySum / binCount;
+        const now = Date.now();
+
+        // Speech volume threshold (voice speech produces higher energy than room noise)
+        const SPEECH_ENERGY_THRESHOLD = 14;
+
+        if (avgEnergy >= SPEECH_ENERGY_THRESHOLD) {
+          // User is actively speaking
+          lastSpeechTimeRef.current = now;
+          hasSpokenRef.current = true;
+          setSilenceCountdown(null);
+        } else if (hasSpokenRef.current) {
+          // User has spoken and is now silent
+          const currentText = `${cumulativeFinalTextRef.current}${currentInstanceFinalRef.current}`.trim();
+          if (currentText.length > 0) {
+            const silenceMs = now - lastSpeechTimeRef.current;
+            if (silenceMs >= 3000) {
+              // 3 seconds of silence reached -> Trigger auto-submit!
+              if (silenceIntervalRef.current) {
+                window.clearInterval(silenceIntervalRef.current);
+                silenceIntervalRef.current = null;
+              }
+              setSilenceCountdown(null);
+              handleSendMessage();
+            } else if (silenceMs >= 1000) {
+              // Display countdown for remaining seconds
+              const remainingSecs = Math.max(1, Math.ceil((3000 - silenceMs) / 1000));
+              setSilenceCountdown(remainingSecs);
+            } else {
+              setSilenceCountdown(null);
+            }
           }
-        };
-        stream.getTracks().forEach((track) => track.stop());
-      };
+        }
+      }, 100);
 
       mediaRecorder.start();
       setIsDirectRecording(true);
-    } catch (e) {
+      isDirectRecordingRef.current = true;
+      setLiveTranscript('');
+    } catch (e: any) {
       console.error('Microphone error:', e);
+      let errorMsg = 'Could not access the microphone.';
+      if (
+        e.name === 'NotAllowedError' ||
+        e.name === 'PermissionDeniedError' ||
+        e.message?.includes('denied')
+      ) {
+        errorMsg =
+          'Microphone permission denied. Please allow microphone access in your browser settings, or open this app in a separate tab if inside an iframe.';
+      } else {
+        errorMsg = `Microphone error: ${e.message || e.name || 'Setup failed'}`;
+      }
+      setMicError(errorMsg);
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isDirectRecording) {
-      mediaRecorderRef.current.stop();
-      setIsDirectRecording(false);
+  const cancelRecording = () => {
+    isCancelledRef.current = true;
+    if (silenceIntervalRef.current) {
+      window.clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
     }
+    setSilenceCountdown(null);
+    hasSpokenRef.current = false;
+    cumulativeFinalTextRef.current = '';
+    currentInstanceFinalRef.current = '';
+
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.abort();
+      } catch {}
+      speechRecognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+      mediaRecorderRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch {}
+      audioContextRef.current = null;
+    }
+    setMicAnalyser(null);
+    micAnalyserRef.current = null;
+    audioChunksRef.current = [];
+    setIsDirectRecording(false);
+    isDirectRecordingRef.current = false;
+    setLiveTranscript('');
+    // Restore text that was present prior to recording
+    setInputText(preRecordingTextRef.current);
+  };
+
+  const stopRecording = () => {
+    if (silenceIntervalRef.current) {
+      window.clearInterval(silenceIntervalRef.current);
+      silenceIntervalRef.current = null;
+    }
+    setSilenceCountdown(null);
+    hasSpokenRef.current = false;
+
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch {}
+      speechRecognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch {}
+      audioContextRef.current = null;
+    }
+    setMicAnalyser(null);
+    micAnalyserRef.current = null;
+    setIsDirectRecording(false);
+    isDirectRecordingRef.current = false;
   };
 
   const handleCompleteSession = async () => {
@@ -887,13 +1204,11 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
                           </>
                         ) : playingMessageId === message.id ? (
                           <>
-                            <div className="flex items-center gap-0.5 mr-0.5">
-                              <span className="w-0.5 h-2.5 bg-[#F87171] animate-pulse rounded-full" />
-                              <span className="w-0.5 h-3.5 bg-[#F87171] animate-pulse rounded-full delay-75" />
-                              <span className="w-0.5 h-2 bg-[#F87171] animate-pulse rounded-full delay-150" />
+                            <div className="scale-75 origin-left shrink-0">
+                              <AudioVisualizer mode="tts" isActive={true} analyser={getSharedTtsAnalyser()} />
                             </div>
-                            <VolumeX className="w-3 h-3 text-[#F87171] shrink-0" />
-                            <span className="font-medium">Stop Audio</span>
+                            <VolumeX className="w-3.5 h-3.5 text-[#F87171] shrink-0 ml-1" />
+                            <span className="font-semibold">Stop Audio</span>
                           </>
                         ) : (
                           <>
@@ -970,6 +1285,45 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
 
         {/* Compact Streamlined Input Toolbar (Stationary & Pinned) */}
         <div className="p-2 sm:p-3 bg-black border-t border-[#1E1E20] shrink-0">
+          {playingMessageId && (
+            <div className="mb-2.5 p-2.5 bg-[#0C1220] border border-[#1A2E50]/60 rounded-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#4285F4] animate-ping shrink-0" />
+                <span className="text-xs font-semibold text-white">Gemini speaking aloud...</span>
+              </div>
+              <div className="flex-1 flex justify-center scale-90">
+                <AudioVisualizer mode="tts" isActive={true} analyser={getSharedTtsAnalyser()} />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  stopGlobalAudio();
+                  setPlayingMessageId(null);
+                }}
+                className="px-2.5 py-1 text-[10px] text-[#A0A0A0] hover:text-white bg-white/[0.05] hover:bg-white/[0.1] rounded-lg transition font-medium cursor-pointer"
+              >
+                Stop
+              </button>
+            </div>
+          )}
+
+          {micError && (
+            <div className="mb-2.5 p-3 bg-[#1A1010] border border-[#3A2020] text-[#F87171] text-xs rounded-xl flex items-start justify-between gap-2.5 animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-[#F87171] shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{micError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMicError(null)}
+                className="p-1 hover:bg-white/[0.05] rounded-lg text-[#808080] hover:text-white transition shrink-0 cursor-pointer"
+                title="Dismiss error message"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -986,38 +1340,123 @@ Select a persona or model tier above, choose a starter prompt, enable Google Sea
                   ? 'bg-[#F8717120] text-[#F87171] border-[#F8717140] animate-pulse'
                   : 'bg-black text-[#808080] hover:text-white border-[#2A2A2D] hover:border-[#3A3A3D]'
               }`}
-              title={isDirectRecording ? 'Stop dictation' : 'Dictate with voice'}
+              title={
+                isDirectRecording
+                  ? 'Stop voice recording'
+                  : 'Speak thoughts with microphone'
+              }
             >
-              {isDirectRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isDirectRecording ? (
+                <MicOff className="w-4 h-4" />
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
             </button>
 
-            {/* Input Box */}
+            {/* Input Box & Recording Stage */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <textarea
-                id="journal-chat-input"
-                rows={1}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder={
-                  isDirectRecording
-                    ? 'Listening to dictation...'
-                    : 'Enter your thoughts'
-                }
-                className="w-full bg-transparent resize-none text-xs sm:text-sm text-[#E0E0E0] placeholder-[#606060] focus:outline-hidden max-h-24 sm:max-h-32 py-1 px-1 leading-relaxed"
-              />
+              {isDirectRecording ? (
+                <div className="flex flex-col gap-2 py-0.5 px-1 min-w-0">
+                  {/* Status, Exact Frequency Visualizer, and Direct Send/Arrow & Cancel Controls */}
+                  <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+                    {/* Status Indicator Badge */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#F8717115] border border-[#F8717130] text-[#F87171] text-[11px] font-medium animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#F87171] animate-ping" />
+                        Live Voice
+                      </span>
+                      {silenceCountdown !== null && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#4285F415] border border-[#4285F430] text-[#4285F4] text-[11px] font-medium animate-pulse">
+                          Auto-sending in {silenceCountdown}s...
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Exact Frequency Visualizer (AnalyserNode) */}
+                    <div className="flex-1 flex justify-center scale-90 sm:scale-95 origin-center">
+                      <AudioVisualizer
+                        mode="mic"
+                        isActive={isDirectRecording}
+                        analyser={micAnalyser}
+                        barCount={24}
+                      />
+                    </div>
+
+                    {/* Controls: Direct Send/Arrow Button & Cancel */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Direct Send/Arrow Button (Replaced Pause/Resume) */}
+                      <button
+                        type="button"
+                        onClick={() => handleSendMessage()}
+                        disabled={
+                          (!inputText.trim() && !liveTranscript.trim()) ||
+                          isAiReplying ||
+                          isFinishingSession
+                        }
+                        className="btn-primary-cta px-2.5 sm:px-3 py-1 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl shadow-sm transition disabled:opacity-40 flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 shrink-0"
+                        title="Submit Spoken Reflection (Enter)"
+                      >
+                        <span>Send</span>
+                        <Send className="w-3.5 h-3.5 text-neutral-900" />
+                      </button>
+
+                      {/* Cancel Button */}
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        className="p-1 sm:px-2 py-1 rounded-xl border border-[#F8717140] bg-[#F8717115] text-[#F87171] hover:bg-[#F8717130] transition flex items-center gap-1 text-xs cursor-pointer font-medium shrink-0"
+                        title="Cancel and discard recording"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Real-time Live Transcription Display (Cumulative Persistent View) */}
+                  <div className="bg-[#121214] border border-[#262629] rounded-xl p-2.5 max-h-32 overflow-y-auto">
+                    <div className="text-xs sm:text-sm leading-relaxed text-[#E0E0E0] flex items-start gap-1">
+                      {inputText || liveTranscript ? (
+                        <span className="text-white font-normal break-words">
+                          {inputText || liveTranscript}
+                          <span className="inline-block w-1.5 h-3.5 ml-1 bg-[#F87171] animate-pulse align-middle rounded-xs" />
+                        </span>
+                      ) : (
+                        <span className="text-[#707070] italic flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#F87171] animate-ping" />
+                          Speak your thoughts... Live continuous transcription accumulating
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <textarea
+                  id="journal-chat-input"
+                  rows={1}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Enter your thoughts"
+                  className="w-full bg-transparent resize-none text-xs sm:text-sm text-[#E0E0E0] placeholder-[#606060] focus:outline-hidden max-h-24 sm:max-h-32 py-1 px-1 leading-relaxed"
+                />
+              )}
             </div>
 
-            {/* Send Action */}
+            {/* Actionable Send / Submit Button */}
             <button
               id="journal-send-btn"
               type="submit"
-              disabled={!inputText.trim() || isAiReplying || isFinishingSession}
+              disabled={
+                (!inputText.trim() && !liveTranscript.trim()) ||
+                isAiReplying ||
+                isFinishingSession
+              }
               className="btn-primary-cta p-2 sm:p-2.5 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-400 rounded-xl shadow-sm transition disabled:opacity-40 shrink-0 flex items-center justify-center cursor-pointer active:scale-95"
               title="Send Reflection (Enter)"
             >

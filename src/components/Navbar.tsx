@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   BookOpen,
-  ShieldCheck,
   PlusCircle,
   BarChart3,
   LogOut,
@@ -147,13 +146,13 @@ export function Navbar({
 
           {/* Desktop & Tablet Center Navigation (Visible on md+ only when NOT chatting to prevent clutter) */}
           {!isChatting && (
-            <div className="hidden md:flex items-center gap-1.5 lg:gap-3 shrink-0">
+            <div className="hidden md:flex items-center shrink-0">
               {/* View Toggles */}
-              <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium shrink-0">
+              <div className="flex bg-[#161618] border border-[#2A2A2D] p-1 rounded-xl text-xs font-medium shrink-0 shadow-xs">
                 <button
                   id="nav-journal-view-btn"
                   onClick={() => setActiveView('journal')}
-                  className={`px-2.5 lg:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                     activeView === 'journal'
                       ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
                       : 'text-[#808080] hover:text-[#E0E0E0]'
@@ -164,7 +163,7 @@ export function Navbar({
                 <button
                   id="nav-analytics-view-btn"
                   onClick={() => setActiveView('analytics')}
-                  className={`px-2.5 lg:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition whitespace-nowrap ${
                     activeView === 'analytics'
                       ? 'bg-[#2A2A2D] text-white shadow-xs font-semibold'
                       : 'text-[#808080] hover:text-[#E0E0E0]'
@@ -176,25 +175,11 @@ export function Navbar({
                   </span>
                 </button>
               </div>
-
-              {/* Security Verification Trigger */}
-              <button
-                id="security-inspector-badge-btn"
-                onClick={onOpenSecurityInspector}
-                title="Click to view full Security Architecture and Threat Model"
-                className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] shrink-0" />
-                <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-                <span>
-                  <span className="hidden xl:inline">Vault: </span>Protected
-                </span>
-              </button>
             </div>
           )}
 
           {/* Desktop & Tablet Right Actions (Visible on md+) */}
-          <div className="hidden md:flex items-center gap-1.5 lg:gap-2.5 shrink-0">
+          <div className="hidden md:flex items-center gap-2 sm:gap-2.5 lg:gap-3 shrink-0">
             {/* If chatting, show Auto-saved status indicator in header */}
             {isChatting && (
               <div
@@ -205,20 +190,6 @@ export function Navbar({
                 <Check className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
                 <span className="font-mono text-xs">Auto-saved</span>
               </div>
-            )}
-
-            {/* If chatting, show compact Vault Protected badge */}
-            {isChatting && (
-              <button
-                id="security-inspector-badge-btn"
-                onClick={onOpenSecurityInspector}
-                title="Click to view full Security Architecture and Threat Model"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase bg-[#1A3020] text-[#4ADE80] border border-[#225030] hover:bg-[#1A3824] transition cursor-pointer shrink-0 whitespace-nowrap"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80] shrink-0" />
-                <span className="hidden lg:inline">Vault: Protected</span>
-                <span className="lg:hidden">Vault</span>
-              </button>
             )}
 
             {/* Dark / Light Mode Toggle Button */}
@@ -277,8 +248,8 @@ export function Navbar({
                 {/* Dropdown */}
                 {showUserDropdown && (
                   <div className="absolute right-0 mt-2 w-64 bg-black border border-[#2A2A2D] rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-4 py-2.5 border-b border-[#2A2A2D]">
-                      <div className="flex items-center gap-2.5 mb-1.5">
+                    <div className="px-4 py-3 border-b border-[#2A2A2D]">
+                      <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4285F4] to-[#9B72F3] text-white flex items-center justify-center text-sm font-bold shrink-0 border border-[#4285F4]/40 shadow-xs">
                           {user.photoURL ? (
                             <img
@@ -300,70 +271,59 @@ export function Navbar({
                           </p>
                         </div>
                       </div>
-                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#4ADE80] bg-[#1A3020] border border-[#225030] px-2 py-0.5 rounded-md w-fit font-mono">
-                        <Lock className="w-3 h-3" />
-                        <span>Authenticated • Write Access</span>
-                      </div>
                     </div>
 
-                    {onOpenProfile && (
+                    <div className="py-1">
+                      {onOpenProfile && (
+                        <button
+                          id="nav-edit-display-name-btn"
+                          onClick={() => {
+                            setShowUserDropdown(false);
+                            onOpenProfile();
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] hover:text-white flex items-center gap-2.5 transition cursor-pointer"
+                        >
+                          <User className="w-4 h-4 text-[#4285F4] shrink-0" />
+                          <span>Edit Display Name</span>
+                        </button>
+                      )}
+
                       <button
-                        id="nav-edit-display-name-btn"
+                        id="dropdown-theme-toggle-btn"
                         onClick={() => {
-                          setShowUserDropdown(false);
-                          onOpenProfile();
+                          toggleTheme();
                         }}
-                        className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] hover:text-white flex items-center gap-2 transition cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] hover:text-white flex items-center justify-between transition cursor-pointer"
                       >
-                        <User className="w-4 h-4 text-[#4285F4]" />
-                        <span>Edit Display Name</span>
+                        <div className="flex items-center gap-2.5">
+                          {theme === 'dark' ? (
+                            <Sun className="w-4 h-4 text-[#FBBF24] shrink-0" />
+                          ) : (
+                            <Moon className="w-4 h-4 text-[#4285F4] shrink-0" />
+                          )}
+                          <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#2A2A2D] text-[#A0A0A0] font-medium">
+                          Toggle
+                        </span>
                       </button>
-                    )}
-
-                    <button
-                      id="dropdown-theme-toggle-btn"
-                      onClick={() => {
-                        toggleTheme();
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center justify-between transition cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        {theme === 'dark' ? (
-                          <Sun className="w-4 h-4 text-[#FBBF24]" />
-                        ) : (
-                          <Moon className="w-4 h-4 text-[#4285F4]" />
-                        )}
-                        <span>Theme: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-                      </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#2A2A2D] text-[#A0A0A0] font-medium">
-                        Toggle
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowUserDropdown(false);
-                        onOpenSecurityInspector();
-                      }}
-                      className="w-full px-4 py-2 text-left text-xs text-[#C0C0C0] hover:bg-[#1E1E20] flex items-center gap-2 transition cursor-pointer"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-[#4ADE80]" />
-                      View Security Rules
-                    </button>
+                    </div>
 
                     <div className="border-t border-[#2A2A2D] my-1" />
 
-                    <button
-                      id="sign-out-btn"
-                      onClick={async () => {
-                        setShowUserDropdown(false);
-                        await signOut();
-                      }}
-                      className="w-full px-4 py-2 text-left text-xs text-[#F87171] hover:bg-[#F8717110] flex items-center gap-2 transition cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
+                    <div className="py-0.5">
+                      <button
+                        id="sign-out-btn"
+                        onClick={async () => {
+                          setShowUserDropdown(false);
+                          await signOut();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs text-[#F87171] hover:bg-[#F8717110] flex items-center gap-2.5 transition cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 shrink-0" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

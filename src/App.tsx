@@ -15,6 +15,7 @@ import { SentimentAnalytics } from './components/SentimentAnalytics';
 import { SecurityInspector } from './components/SecurityInspector';
 import { AuthModal } from './components/AuthModal';
 import { LandingPage } from './components/LandingPage';
+import { BackgroundVideo } from './components/BackgroundVideo';
 import { PlusCircle, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -243,13 +244,14 @@ export default function App() {
   // Initial authentication initialization screen
   if (!authInitialized) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+      <div className="relative isolate min-h-screen flex flex-col items-center justify-center text-white">
+        <BackgroundVideo />
         <img
           src="/metallic_star_logo.png"
           alt="Gemini Journal"
-          className="h-16 w-auto object-contain filter drop-shadow-[0_0_16px_rgba(255,255,255,0.4)] mb-4 animate-pulse select-none"
+          className="h-16 w-auto object-contain filter drop-shadow-[0_0_16px_rgba(255,255,255,0.4)] mb-4 animate-pulse select-none z-10"
         />
-        <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold">Loading Gemini Journal...</p>
+        <p className="text-xs uppercase tracking-widest text-neutral-300 font-semibold z-10">Loading Gemini Journal...</p>
       </div>
     );
   }
@@ -257,7 +259,7 @@ export default function App() {
   // If user is unauthenticated, show the Cosmic Landing Page as the root entry
   if (!currentUser) {
     return (
-      <>
+      <div className="relative isolate min-h-screen text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white">
         <LandingPage
           onOpenLogin={() => {
             setAuthModalStep('auth');
@@ -302,7 +304,7 @@ export default function App() {
           onClose={() => setIsSecurityModalOpen(false)}
           currentUser={currentUser}
         />
-      </>
+      </div>
     );
   }
 
@@ -311,8 +313,11 @@ export default function App() {
     <div
       className={`${
         isChatting ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'
-      } bg-black text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white`}
+      } relative isolate text-[#E0E0E0] flex flex-col font-sans selection:bg-[#4285F4]/30 selection:text-white`}
     >
+      {/* Global Fixed Background Video & Overlay across Dashboard */}
+      <BackgroundVideo />
+
       {/* Top Application Bar with Dynamic Top-Left Back Button & Dynamic Session Title */}
       <Navbar
         user={currentUser}
@@ -337,7 +342,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className={`flex-1 bg-black ${isChatting ? 'flex flex-col min-h-0 overflow-hidden' : ''}`}>
+      <main className={`flex-1 ${isChatting ? 'flex flex-col min-h-0 overflow-hidden' : ''}`}>
         {/* If user is active in interactive Journal Chat Session */}
         {isChatting ? (
           <JournalChat

@@ -227,7 +227,7 @@ export function AuthModal({
   return (
     <div
       id="auth-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-opacity animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md transition-opacity animate-in fade-in"
       onClick={() => {
         if (isDismissible && step !== 'name_prompt') onClose();
       }}

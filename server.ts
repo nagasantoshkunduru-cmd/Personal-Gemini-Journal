@@ -17,6 +17,9 @@ const PORT = 3000;
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
+// Mount public static files (videos, images, logos) with proper MIME types & range support
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 // Mount API Proxy Routes
 app.use('/api', apiRouter);
 

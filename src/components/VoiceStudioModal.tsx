@@ -182,7 +182,13 @@ export function VoiceStudioModal({
       startVisualizer();
     } catch (err: any) {
       console.error('[Live Voice] Setup failed:', err);
-      setConnectionError(err.message || 'Microphone permission or Live API error.');
+      let errorMsg = 'Microphone permission or Live API error.';
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message?.includes('denied')) {
+        errorMsg = 'Microphone permission denied. Please allow microphone access in your browser settings, or open this app in a separate tab if inside an iframe.';
+      } else {
+        errorMsg = `Microphone error: ${err.message || err.name || 'Setup failed'}`;
+      }
+      setConnectionError(errorMsg);
       setIsConnecting(false);
       setIsConnected(false);
     }

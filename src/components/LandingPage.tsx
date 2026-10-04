@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Brain,
@@ -35,8 +34,40 @@ export function LandingPage({
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-black text-[#E0E0E0] flex flex-col font-sans overflow-x-hidden selection:bg-purple-500/30 selection:text-white">
-      {/* 1. COSMIC STARFIELD & AMBIENT RADIAL GLOWS */}
+    <div className="relative isolate min-h-screen text-[#E0E0E0] flex flex-col font-sans overflow-x-hidden selection:bg-purple-500/30 selection:text-white">
+      {/* 1. HTML5 FIXED BACKGROUND VIDEO */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 -z-10 object-cover w-full h-full pointer-events-none select-none"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: -10,
+          objectFit: 'cover',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <source src="/background.mp4" type="video/mp4" />
+        <source src="/wallpaper.mp4" type="video/mp4" />
+        <source src="/Copy%20Of%20Animated%20Dots.mp4" type="video/mp4" />
+      </video>
+
+      {/* 2. OVERLAY & READABILITY LAYER */}
+      <div
+        className="fixed inset-0 -z-10 bg-black/60 backdrop-blur-[2px] pointer-events-none select-none"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: -10,
+        }}
+        aria-hidden="true"
+      />
+
+      {/* 3. AMBIENT RADIAL GLOWS & COSMIC DEPTH */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
         {/* Ambient cosmic glow orbs with deep dark falloff */}
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[550px] bg-gradient-to-b from-purple-700/18 via-indigo-600/10 to-transparent blur-[120px] rounded-full" />
@@ -62,7 +93,7 @@ export function LandingPage({
         ))}
 
         {/* Ambient pitch black vignette overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_92%)] opacity-90" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_92%)] opacity-80" />
       </div>
 
       {/* 2. TOP NAVIGATION BAR */}
@@ -80,15 +111,10 @@ export function LandingPage({
               className="h-9 sm:h-10 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-transform duration-200 shrink-0 select-none"
             />
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
-                  Gemini Journal
-                </span>
-                <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
-                  AI
-                </span>
-              </div>
-              <span className="hidden sm:block text-[11px] text-neutral-400 font-medium -mt-0.5 truncate">
+              <span className="text-base sm:text-lg font-bold tracking-tight text-white truncate leading-tight">
+                Gemini Journal
+              </span>
+              <span className="hidden sm:block text-[11px] text-neutral-400 font-medium truncate mt-0.5">
                 Reflective Intelligence
               </span>
             </div>
@@ -124,15 +150,8 @@ export function LandingPage({
       </header>
 
       {/* 3. HERO SECTION */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 sm:px-6 pt-10 sm:pt-16 md:pt-20 pb-16 sm:pb-28">
+      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 sm:px-6 pt-6 sm:pt-10 md:pt-14 pb-16 sm:pb-28">
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center w-full">
-          
-          {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-neutral-800 border border-neutral-700 text-white text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-6 sm:mb-8 shadow-sm backdrop-blur-md max-w-full text-center animate-in fade-in slide-in-from-top-3 duration-500">
-            <Sparkles className="w-3.5 h-3.5 text-white animate-pulse shrink-0" />
-            <span className="truncate sm:whitespace-normal">✦ AI-POWERED REFLECTIVE INTELLIGENCE</span>
-          </div>
-
           {/* Main Heading with Colorful Gradient Accent Word */}
           <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.18] sm:leading-[1.12] mb-4 sm:mb-6 max-w-3xl">
             Bridge the Gap Between Thoughts &amp;{' '}
@@ -206,12 +225,8 @@ export function LandingPage({
 
       {/* 5. FOOTER */}
       <footer className="relative z-10 border-t border-white/[0.06] py-6 sm:py-8 text-neutral-500 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-500">© 2026 Gemini Journal • AI powered Gemini journal</p>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/[0.06] border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>OWASP &amp; Agentic Threat Protected</span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center text-center">
+          <p className="text-xs text-neutral-500 font-medium">© 2026 Gemini Journal • AI powered journal</p>
         </div>
       </footer>
     </div>

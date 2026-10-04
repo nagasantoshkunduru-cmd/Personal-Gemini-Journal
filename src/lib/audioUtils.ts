@@ -87,6 +87,11 @@ export function pcmToWavBlob(base64Pcm: string, sampleRate = 24000, numChannels 
 // Global AudioContext and node for reliable Web Audio playback without HTML5 MediaElement errors
 let sharedAudioCtx: AudioContext | null = null;
 let activeSourceNode: AudioBufferSourceNode | null = null;
+let sharedTtsAnalyser: AnalyserNode | null = null;
+
+export function getSharedTtsAnalyser(): AnalyserNode | null {
+  return sharedTtsAnalyser;
+}
 
 export function playPcm24kAudio(
   base64Pcm: string,
@@ -106,10 +111,17 @@ export function playPcm24kAudio(
       sharedAudioCtx.resume();
     }
 
+    if (!sharedTtsAnalyser || sharedTtsAnalyser.context !== sharedAudioCtx) {
+      sharedTtsAnalyser = sharedAudioCtx.createAnalyser();
+      sharedTtsAnalyser.fftSize = 64;
+      sharedTtsAnalyser.smoothingTimeConstant = 0.8;
+      sharedTtsAnalyser.connect(sharedAudioCtx.destination);
+    }
+
     const audioBuffer = pcm24kBase64ToAudioBuffer(sharedAudioCtx, base64Pcm);
     const sourceNode = sharedAudioCtx.createBufferSource();
     sourceNode.buffer = audioBuffer;
-    sourceNode.connect(sharedAudioCtx.destination);
+    sourceNode.connect(sharedTtsAnalyser);
     activeSourceNode = sourceNode;
 
     sourceNode.onended = () => {
